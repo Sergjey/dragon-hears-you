@@ -53,5 +53,6 @@ Naming: `*.server.luau` → Script, `*.client.luau` → LocalScript, `*.luau` �
 ### Agent rules & skills
 
 - Always-on rules: `.cursor/rules/` (Rojo layout, security, Luau style)
-- Skills: `rojo-workflow`, `roblox-remotes`, `roblox-playtest` in `.cursor/skills/`
+- Skills: `rojo-workflow`, `roblox-remotes`, `roblox-playtest`, `roblox-ui-polish` in `.cursor/skills/`
+- Visual refs: `refs/` (UI / mood / characters)
 - High-level notes: `AGENTS.md`

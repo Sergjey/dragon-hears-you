@@ -13,7 +13,11 @@ Roblox experience developed with **Rojo** + **Cursor** + **official Studio MCP**
 - Core loop: _TBD_
 - Out of scope for now: _TBD_
 
+## Visual
+- Tokens + polish rules: skill `roblox-ui-polish`, rule `roblox-ui`
+- Drop screenshots in `refs/ui`, `refs/mood`, `refs/chars` (see `refs/README.md`)
+
 ## Agent shortcuts
 - Project rules: `.cursor/rules/`
-- Skills: `rojo-workflow`, `roblox-remotes`, `roblox-playtest` under `.cursor/skills/`
+- Skills: `rojo-workflow`, `roblox-remotes`, `roblox-playtest`, `roblox-ui-polish` under `.cursor/skills/`
 - MCP: `.cursor/mcp.json` → Roblox Studio built-in MCP

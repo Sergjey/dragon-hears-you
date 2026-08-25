@@ -1,0 +1,12 @@
+---
+description: Ban default Roblox “kolhoz” UI; use project visual tokens and refs
+alwaysApply: true
+---
+
+# UI / visual quality bar
+
+- Never ship stock Roblox look: default blue buttons, SourceSans/Gotham-only stacks without hierarchy, gray `Frame` panels, unscaled offset-only UI, missing hover/press states.
+- Prefer **scale** (`UDim2.fromScale`) + `UIAspectRatioConstraint` / `UISizeConstraint`; test phone + desktop safe areas.
+- Before inventing UI chrome, check `refs/` and `.cursor/skills/roblox-ui-polish`.
+- Prefer Creator Store / owned asset IDs for icons, VFX, character anims over procedural placeholder art.
+- Characters: R15 + proper Animator; do not leave T-pose or default Animate as “final”.
