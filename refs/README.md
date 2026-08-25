@@ -16,4 +16,4 @@ Drop screenshots and moodboards here so the agent copies a **real** look instead
 ## How agents should use this
 1. List files in the relevant folder before designing.
 2. Match hierarchy, spacing density, and contrast — don’t literally steal assets.
-3. If a folder is empty, follow tokens in `.cursor/skills/roblox-ui-polish` and ask for refs when polish matters.
+3. If folders are empty (normal early on): follow `roblox-ui-polish` tokens + component recipes; humans can browse `LINKS.md`.

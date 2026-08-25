@@ -13,9 +13,9 @@ description: >-
 Ship UI people would actually play: clear hierarchy, readable on phone, intentional motion, on-theme with **dragon-hears-you** — not stock Studio defaults.
 
 ## Before drawing pixels
-1. Read `refs/README.md` and any images under `refs/ui/`, `refs/mood/`.
+1. Check `refs/ui|mood|chars` for images; if empty, use **Tokens** + **Component recipes** below (and `refs/LINKS.md` for human inspiration).
 2. Reuse existing ScreenGui / components if present.
-3. If no refs yet: still follow **Tokens** below; do not invent a second style mid-feature.
+3. Do not invent a second style mid-feature — stick to ember tokens.
 
 ## Tokens (v1 — ember dragon)
 | Role | Value |
@@ -49,6 +49,25 @@ Every primary control needs **default / hover / pressed / disabled** (color, tra
 - [ ] Thumb-reachable primary CTA on phones
 - [ ] Contrast readable on light and dark world backdrops (add panel scrim if needed)
 - [ ] `AutoLocalize` / text size: long English strings don’t clip
+
+## Component recipes (no screenshots required)
+
+### Primary button
+- Height ~36–44px (scale on Y for mobile), `UICorner` 10, ember fill, gold text or inverse on hover
+- `UIStroke` 1px gold @ 0.35 transparency; hover → brighter fill; press → scale 0.97
+
+### Panel / modal
+- Dark panel + slight transparency; full-screen dimmer behind (`BackgroundTransparency` 0.4 black)
+- Title (bold) + short subtitle; content; footer with primary + ghost secondary
+- Open: transparency + scale 0.96→1 in ~0.2s; close reverse
+
+### HUD chip (HP / resource)
+- Left or top-left cluster; bar with ember fill on deep track; icon 24px + number
+- Don’t crowd center crosshair / dragon focus area
+
+### Text
+- Title 24–32, body 16–18, caption 12–14; muted for secondary
+- Prefer short labels (“Listen”, “Bond”, “Flee”) over paragraphs
 
 ## Motion
 - Panels: fade + slight Y or scale (0.96→1)
