@@ -1,0 +1,24 @@
+---
+description: Core Rojo + Luau + security conventions for dragon-hears-you
+alwaysApply: true
+---
+
+# dragon-hears-you — agent defaults
+
+## Source of truth
+- Game logic lives in `src/` and syncs via **Rojo**. Do not treat Studio script sources as canonical.
+- Prefer editing files under `src/`; use Studio MCP for DataModel inspect, properties, assets, playtest — not as the primary way to author scripts.
+- If MCP and Rojo diverge, fix files in `src/` and re-sync.
+
+## Layout
+- `src/server/` → `ServerScriptService.Server` (Scripts: `*.server.luau`)
+- `src/client/` → `StarterPlayerScripts.Client` (LocalScripts: `*.client.luau`)
+- `src/shared/` → `ReplicatedStorage.Shared` (ModuleScripts: `*.luau`)
+
+## Security
+- Never trust the client for currency, inventory, win conditions, or permissions.
+- Validate all RemoteEvent/RemoteFunction args on the server (type, range, ownership).
+- No secrets in repo (Open Cloud keys, `.env`, tokens).
+
+## Git
+- `main` is protected — ship via feature branch + PR only.
