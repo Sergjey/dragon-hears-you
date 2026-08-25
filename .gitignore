@@ -1,0 +1,19 @@
+# Roblox place / model binaries (keep source of truth in src/)
+*.rbxl
+*.rbxlx
+*.rbxm
+*.rbxmx
+
+# Rojo
+sourcemap.json
+
+# OS / editor
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Tooling caches
+*.log
