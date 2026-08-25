@@ -1,0 +1,19 @@
+# Agent notes — dragon-hears-you
+
+Roblox experience developed with **Rojo** + **Cursor** + **official Studio MCP**.
+
+## Stack
+- Source: `src/{client,server,shared}`
+- Toolchain: Rokit (`rojo`, `selene`, `stylua`)
+- Ship: feature branch → PR → protected `main`
+
+## Game (fill in as design firms up)
+- Working title: dragon-hears-you
+- Elevator pitch: _TBD_
+- Core loop: _TBD_
+- Out of scope for now: _TBD_
+
+## Agent shortcuts
+- Project rules: `.cursor/rules/`
+- Skills: `rojo-workflow`, `roblox-remotes`, `roblox-playtest` under `.cursor/skills/`
+- MCP: `.cursor/mcp.json` → Roblox Studio built-in MCP

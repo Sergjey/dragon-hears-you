@@ -1,0 +1,13 @@
+---
+description: Luau style for this project (types, modules, services)
+globs: "**/*.luau"
+alwaysApply: false
+---
+
+# Luau style
+
+- Prefer typed Luau (`name: string`, return types on public APIs).
+- Get services once at module top: `local Players = game:GetService("Players")`.
+- Prefer small ModuleScripts in `shared/` over giant scripts.
+- Use `task.` APIs (`task.spawn`, `task.delay`, `task.wait`) — not legacy `wait`/`spawn`.
+- Match StyLua (tabs, 120 cols) and keep Selene clean.

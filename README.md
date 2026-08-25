@@ -49,3 +49,9 @@ Naming: `*.server.luau` → Script, `*.client.luau` → LocalScript, `*.luau` �
 - Write game logic in `src/` (Rojo) so git diffs and PRs stay clean.
 - Use Studio MCP for exploring instances, properties, assets, and playtests.
 - Avoid letting the agent rewrite the same scripts only through MCP — Rojo will overwrite Studio script sources on sync.
+
+### Agent rules & skills
+
+- Always-on rules: `.cursor/rules/` (Rojo layout, security, Luau style)
+- Skills: `rojo-workflow`, `roblox-remotes`, `roblox-playtest` in `.cursor/skills/`
+- High-level notes: `AGENTS.md`
