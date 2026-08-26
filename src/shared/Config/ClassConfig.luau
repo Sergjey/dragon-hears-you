@@ -62,11 +62,28 @@ local definitions: { [ClassId]: ClassDefinition } = {
 		AbilityNoise = 18,
 		AbilityRange = 40,
 	},
+	Scout = {
+		Id = "Scout",
+		DisplayName = "Scout",
+		Description = "Information — sense treasure and the dragon",
+		FootstepNoiseMultiplier = 1,
+		WalkSpeedMultiplier = 1.05,
+		LootPromptSpeedBonus = 0,
+		ReviveSpeedMultiplier = 1,
+		MaxHPMultiplier = 1,
+		AbilityId = "TreasureSense",
+		AbilityName = "Treasure Sense",
+		AbilityDurationSeconds = 5,
+		AbilityCooldownSeconds = 30,
+		AbilityRange = 120,
+		SenseMinRarity = "Rare",
+		PassiveLootRange = 45,
+	},
 }
 
 local ClassConfig = {
 	DefaultClassId = "Thief" :: ClassId,
-	OrderedIds = { "Thief", "Medic", "Guardian", "Trickster" } :: { ClassId },
+	OrderedIds = { "Thief", "Medic", "Guardian", "Trickster", "Scout" } :: { ClassId },
 }
 
 function ClassConfig.get(id: string?): ClassDefinition

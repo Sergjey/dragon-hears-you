@@ -34,6 +34,7 @@ local FeedbackConfig = {
 		Heal = Color3.fromRGB(80, 220, 120),
 		Shield = Color3.fromRGB(230, 210, 90),
 		NoiseMaker = Color3.fromRGB(232, 120, 48),
+		TreasureSense = Color3.fromRGB(100, 180, 255),
 		SmokeBomb = Color3.fromRGB(120, 130, 150),
 		DragonBait = Color3.fromRGB(180, 60, 220),
 	},

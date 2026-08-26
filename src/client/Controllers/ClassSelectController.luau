@@ -90,7 +90,7 @@ local function ensureSelectGui()
 	panel.Name = "Panel"
 	panel.AnchorPoint = Vector2.new(0, 0.5)
 	panel.Position = UDim2.fromScale(-0.25, 0.45)
-	panel.Size = UDim2.fromScale(0.22, 0.5)
+	panel.Size = UDim2.fromScale(0.22, 0.58)
 	panel.BackgroundColor3 = Tokens.Panel
 	panel.BackgroundTransparency = 0.1
 	panel.BorderSizePixel = 0
@@ -131,7 +131,7 @@ local function ensureSelectGui()
 	for _, def in ClassConfig.list() do
 		local btn = Instance.new("TextButton")
 		btn.Name = def.Id
-		btn.Size = UDim2.fromScale(1, 0.22)
+		btn.Size = UDim2.fromScale(1, 0.17)
 		btn.BackgroundColor3 = Tokens.BgDeep
 		btn.BorderSizePixel = 0
 		btn.AutoButtonColor = false
@@ -247,6 +247,9 @@ local function applyClassState(payload: ClassStatePayload)
 		end
 		if payload.SilentStepRemaining then
 			cdLabel.Text ..= string.format(" · Silent %.0fs", payload.SilentStepRemaining)
+		end
+		if payload.TreasureSenseRemaining then
+			cdLabel.Text ..= string.format(" · Sense %.0fs", payload.TreasureSenseRemaining)
 		end
 		if payload.ShieldCharges and payload.ShieldCharges > 0 then
 			cdLabel.Text ..= " · Shield"
