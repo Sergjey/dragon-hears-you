@@ -1,6 +1,4 @@
--- Server entry (Script). Syncs via Rojo into ServerScriptService.Server
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-- Server entry. Boots Gorynych Heist Phase 1 vertical slice.
+local MatchService = require(script.Services.MatchService)
 
-local Hello = require(ReplicatedStorage.Shared.Hello)
-
-print(Hello.greet("dragon-hears-you (server)"))
+MatchService.init()

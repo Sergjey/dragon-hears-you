@@ -1,6 +1,8 @@
--- Client entry (LocalScript). Syncs via Rojo into StarterPlayerScripts.Client
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-- Client entry. Boots Phase 1 HUD and interaction.
+local HUDController = require(script.Controllers.HUDController)
+local InteractionController = require(script.Controllers.InteractionController)
+local ResultController = require(script.Controllers.ResultController)
 
-local Hello = require(ReplicatedStorage.Shared.Hello)
-
-print(Hello.greet("dragon-hears-you (client)"))
+HUDController.start()
+ResultController.start()
+InteractionController.start()
