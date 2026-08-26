@@ -146,6 +146,10 @@ local function canUseAbility(player: Player): boolean
 	if untilT and untilT > now() then
 		return false
 	end
+	local CarryService = require(script.Parent.CarryService)
+	if CarryService.abilitiesDisabled(player) then
+		return false
+	end
 	return true
 end
 

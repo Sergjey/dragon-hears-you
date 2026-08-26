@@ -48,6 +48,10 @@ function GadgetService.tryUseGadget(player: Player): boolean
 	if not canUse(player) then
 		return false
 	end
+	local CarryService = require(script.Parent.CarryService)
+	if CarryService.abilitiesDisabled(player) then
+		return false
+	end
 	local gadgetId = EconomyService.getEquippedGadgetId(player)
 	local def = EconomyConfig.getGadget(gadgetId)
 	if not def or not def.IsActive then

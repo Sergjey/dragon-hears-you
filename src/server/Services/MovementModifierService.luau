@@ -74,6 +74,8 @@ function MovementModifierService.applyForPlayer(player: Player)
 	local tier = getTier(fill)
 	local classDef = ClassConfig.get(player:GetAttribute("ClassId") :: any)
 	local speed = GameConfig.DefaultWalkSpeed * tier.SpeedMultiplier * classDef.WalkSpeedMultiplier
+	local CarryService = require(script.Parent.CarryService)
+	speed *= CarryService.getCarrySpeedMultiplier(player)
 	local slow = slowUntil[player]
 	if slow and slow.Until > now then
 		speed *= slow.Multiplier
@@ -112,7 +114,10 @@ function MovementModifierService.getFootstepMultiplier(player: Player): number
 		smokeMul = (smokeDef and smokeDef.SmokeFootstepMultiplier) or 0.15
 	end
 
-	return bagMul * classMul * bagTypeMul * gadgetMul * smokeMul
+	local CarryService = require(script.Parent.CarryService)
+	local carryMul = CarryService.getCarryNoiseMultiplier(player)
+
+	return bagMul * classMul * bagTypeMul * gadgetMul * smokeMul * carryMul
 end
 
 local function isSilentStep(player: Player): boolean

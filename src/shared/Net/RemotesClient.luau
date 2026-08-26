@@ -117,4 +117,16 @@ function RemotesClient.matchEvent(): RemoteEvent
 	return RemotesClient.getEvent(RemoteNames.MatchEvent)
 end
 
+function RemotesClient.requestCarryInteract(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.RequestCarryInteract)
+end
+
+function RemotesClient.requestDropCarry(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.RequestDropCarry)
+end
+
+function RemotesClient.carryState(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.CarryState)
+end
+
 return RemotesClient

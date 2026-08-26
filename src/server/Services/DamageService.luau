@@ -5,6 +5,7 @@ local DragonConfig = require(ReplicatedStorage.Shared.Config.DragonConfig)
 local ClassConfig = require(ReplicatedStorage.Shared.Config.ClassConfig)
 
 local BackpackService = require(script.Parent.BackpackService)
+local CarryService = require(script.Parent.CarryService)
 local DownedService = require(script.Parent.DownedService)
 local ExtractionService = require(script.Parent.ExtractionService)
 local LootService = require(script.Parent.LootService)
@@ -91,6 +92,7 @@ function DamageService.resetPlayer(player: Player)
 end
 
 function DamageService.dropLootAt(player: Player)
+	CarryService.dropForPlayer(player, true)
 	local root = getRoot(player)
 	local pos = if root then root.Position else Vector3.new(0, 5, 0)
 	local items = BackpackService.dropAll(player)
@@ -105,6 +107,7 @@ function DamageService.dropLootAt(player: Player)
 end
 
 function DamageService.dropLootAtPosition(player: Player, position: Vector3)
+	CarryService.dropForPlayer(player, true)
 	local items = BackpackService.dropAll(player)
 	for i, item in items do
 		local offset = Vector3.new((i % 3) - 1, 0, math.floor(i / 3))
