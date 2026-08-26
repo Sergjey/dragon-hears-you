@@ -11,22 +11,27 @@ Roblox experience developed with **Rojo** + **Cursor** + **official Studio MCP**
 - Working title: **Gorynych Heist** (repo: dragon-hears-you)
 - Elevator pitch: Team of thieves steals treasure from sleeping three-headed Zmey Gorynych — greed raises shared Noise and wakes the dragon.
 - Core loop: Lobby → loadout → dungeon → loot / noise risk → extract → sell → upgrades
-- Current phase: **Phase 3 Done** (Downed/Revive, team roster, leave drops, match-end) — playtest green for closeout
-- Done: Phase 1 vertical slice; Phase 2 dragon stages / AI; Phase 3 multiplayer
-- Next: **Phase 4** lobby Solo/Duo/Squad pads + TeleportService
+- Current phase: **Phase 4 lobby** (Solo/Duo/Squad pads, countdown, Studio in-place match start; TeleportService when PlaceIds set)
+- Done: Phase 1 vertical slice; Phase 2 dragon AI; Phase 3 multiplayer (Downed/Revive, roster, match-end)
+- Next: Phase 5+ (loadout/classes deferred); set `LobbyConfig` PlaceIds for published multi-place
 - Out of scope still: classes, CarryService runtime, DataStore economy, monetization
 
+## Lobby / teleport
+- Studio default: `LobbyPlaceId` / `DungeonPlaceId` = `0` → **in-place** pad → dungeon (no TeleportService)
+- Published: set PlaceIds in `src/shared/Config/LobbyConfig.luau` → `ReserveServer` + private teleport; match end returns to lobby PlaceId
+- Pads: CollectionService `TeleportPad` + attributes `PadId`, `PartySize` (1/2/4)
+
 ## Visual (graybox)
-- **Intentional temporary graybox**: procedural `DungeonBootstrap` parts + placeholder dragon. Not final art.
-- Gameplay binds to **CollectionService tags** (`Loot`, `Dragon`, `ExtractionZone`, `HideSpot`) so Creator Store / custom models can replace parts later without rewriting services.
-- Full art / sound / animation polish = **Phase 7**. Optional short art spike after Phase 3–4 is a separate task.
+- **Intentional temporary graybox**: procedural lobby pads + `DungeonBootstrap` + placeholder dragon. Not final art.
+- Gameplay binds to **CollectionService tags** (`Loot`, `Dragon`, `ExtractionZone`, `HideSpot`, `TeleportPad`) so models can replace parts later.
+- Full art / sound / animation polish = **Phase 7**.
 
 ## Architecture
-- Shared config: `src/shared/Config/{Game,Noise,Loot,Dragon,Multiplayer,Tags}`
-- Server services: Match, Noise, Loot, Backpack, MovementModifier, Extraction, Damage, Downed, Dragon, DragonPerception
-- Client: HUD (team roster) / Result / Interaction / DragonEffects / Downed
-- Remotes: MatchState, ExtractionState, MatchResult, RequestDropLoot, DragonState, DragonEvent, RequestRevive, RosterState, MatchEnded
-- Map: procedural `DungeonBootstrap` (CollectionService tags)
+- Shared config: `src/shared/Config/{Game,Noise,Loot,Dragon,Multiplayer,Lobby,Tags}`
+- Server: Lobby, MatchTeleport, Match, Noise, Loot, Backpack, MovementModifier, Extraction, Damage, Downed, Dragon, DragonPerception
+- Client: Lobby / HUD / Result / Interaction / DragonEffects / Downed
+- Remotes: LobbyPadState + match remotes (MatchState, RosterState, MatchEnded, …)
+- Map: `LobbyBootstrap` + procedural `DungeonBootstrap`
 
 ## Agent shortcuts
 - Project rules: `.cursor/rules/`

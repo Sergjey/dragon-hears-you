@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
 
 local DragonConfig = require(ReplicatedStorage.Shared.Config.DragonConfig)
 local MultiplayerConfig = require(ReplicatedStorage.Shared.Config.MultiplayerConfig)
@@ -13,6 +14,7 @@ local DownedService = require(script.Parent.DownedService)
 local DragonService = require(script.Parent.DragonService)
 local ExtractionService = require(script.Parent.ExtractionService)
 local LootService = require(script.Parent.LootService)
+local MatchTeleport = require(script.Parent.MatchTeleport)
 local MovementModifierService = require(script.Parent.MovementModifierService)
 local NoiseService = require(script.Parent.NoiseService)
 
@@ -23,13 +25,16 @@ type MatchEndedPayload = MultiplayerTypes.MatchEndedPayload
 
 local MatchService = {}
 
-local started = false
+local prepared = false
+local matchRunning = false
 local matchEnded = false
 local outcome = "Ongoing"
 local status: { [Player]: PlayerMatchStatus } = {}
 local securedValue: { [Player]: number } = {}
 local securedItems: { [Player]: number } = {}
 local lastPositions: { [Player]: Vector3 } = {}
+local partyMembers: { [Player]: boolean } = {}
+local characterConns: { [Player]: RBXScriptConnection } = {}
 
 local function teleportToSpawn(player: Player)
 	local character = player.Character
@@ -52,21 +57,27 @@ function MatchService.getStatus(player: Player): PlayerMatchStatus
 end
 
 function MatchService.isAlive(player: Player): boolean
-	return MatchService.getStatus(player) == "Alive"
+	return partyMembers[player] == true and MatchService.getStatus(player) == "Alive"
+end
+
+function MatchService.isMatchRunning(): boolean
+	return matchRunning and not matchEnded
 end
 
 local function broadcastRoster()
 	local entries: { RosterEntry } = {}
-	for _, player in Players:GetPlayers() do
-		local st = status[player] or "Alive"
-		table.insert(entries, {
-			UserId = player.UserId,
-			Name = player.DisplayName,
-			Status = st,
-			HP = DamageService.getHP(player),
-			MaxHP = DragonConfig.MaxPlayerHP,
-			BleedoutRemaining = if st == "Downed" then DownedService.getBleedoutRemaining(player) else nil,
-		})
+	for player in partyMembers do
+		if player.Parent then
+			local st = status[player] or "Alive"
+			table.insert(entries, {
+				UserId = player.UserId,
+				Name = player.DisplayName,
+				Status = st,
+				HP = DamageService.getHP(player),
+				MaxHP = DragonConfig.MaxPlayerHP,
+				BleedoutRemaining = if st == "Downed" then DownedService.getBleedoutRemaining(player) else nil,
+			})
+		end
 	end
 	local payload: RosterStatePayload = {
 		Entries = entries,
@@ -76,8 +87,18 @@ local function broadcastRoster()
 	Remotes.rosterState():FireAllClients(payload)
 end
 
+local function collectPartyPlayers(): { Player }
+	local list = {}
+	for player in partyMembers do
+		if player.Parent then
+			table.insert(list, player)
+		end
+	end
+	return list
+end
+
 local function endMatch(finalOutcome: string)
-	if matchEnded then
+	if matchEnded or not matchRunning then
 		return
 	end
 	matchEnded = true
@@ -86,7 +107,8 @@ local function endMatch(finalOutcome: string)
 	DragonService.reset()
 	broadcastRoster()
 
-	for _, player in Players:GetPlayers() do
+	local party = collectPartyPlayers()
+	for _, player in party do
 		local extracted = status[player] == "Extracted"
 		local payload: MatchEndedPayload = {
 			Outcome = finalOutcome,
@@ -95,29 +117,34 @@ local function endMatch(finalOutcome: string)
 			Extracted = extracted,
 		}
 		Remotes.matchEnded():FireClient(player, payload)
-		-- Also fire classic result for extractors who already saw it; others get summary
 		if not extracted then
 			Remotes.matchResult():FireClient(player, {
 				SecuredValue = securedValue[player] or 0,
 				ItemCount = securedItems[player] or 0,
 			})
 		end
+		player:SetAttribute("GamePhase", "Lobby")
 	end
+
+	task.delay(2.5, function()
+		MatchTeleport.returnPartyToLobby(party)
+	end)
 end
 
 local function checkMatchEnd()
-	if matchEnded then
-		return
-	end
-	local players = Players:GetPlayers()
-	if #players == 0 then
+	if matchEnded or not matchRunning then
 		return
 	end
 
 	local anyActive = false
 	local anyExtracted = false
 	local anyDead = false
-	for _, player in players do
+	local anyMember = false
+	for player in partyMembers do
+		if not player.Parent then
+			continue
+		end
+		anyMember = true
 		local st = status[player] or "Alive"
 		if st == "Alive" or st == "Downed" then
 			anyActive = true
@@ -128,10 +155,13 @@ local function checkMatchEnd()
 		end
 	end
 
+	if not anyMember then
+		endMatch("TeamWipe")
+		return
+	end
 	if anyActive then
 		return
 	end
-
 	if anyExtracted then
 		endMatch("Complete")
 	elseif anyDead then
@@ -140,7 +170,7 @@ local function checkMatchEnd()
 end
 
 function MatchService.setExtracted(player: Player, value: number, itemCount: number)
-	if matchEnded then
+	if matchEnded or not partyMembers[player] then
 		return
 	end
 	setStatus(player, "Extracted")
@@ -152,26 +182,25 @@ function MatchService.setExtracted(player: Player, value: number, itemCount: num
 end
 
 local function registerPlayer(player: Player)
-	local count = #Players:GetPlayers()
-	if count > MultiplayerConfig.MaxPlayersInMatch then
-		warn(`[Gorynych] Match soft-cap {MultiplayerConfig.MaxPlayersInMatch} exceeded ({count})`)
-	end
 	setStatus(player, "Alive")
 	securedValue[player] = 0
 	securedItems[player] = 0
 	DamageService.resetPlayer(player)
 	ExtractionService.resetPlayer(player)
 	DownedService.clear(player)
+	player:SetAttribute("GamePhase", "Match")
 	broadcastRoster()
 end
 
 local function onCharacter(player: Player, character: Model)
+	if not partyMembers[player] or not matchRunning then
+		return
+	end
 	task.defer(function()
 		local root = character:WaitForChild("HumanoidRootPart", 8)
 		if root and root:IsA("BasePart") then
 			local st = status[player]
 			if st == "Dead" or st == "Extracted" then
-				-- Spectator: park near spawn, freeze
 				root.CFrame = CFrame.new(MultiplayerConfig.SpectatorSpawnOffset)
 				local humanoid = character:FindFirstChildOfClass("Humanoid")
 				if humanoid then
@@ -188,19 +217,15 @@ local function onCharacter(player: Player, character: Model)
 		broadcastRoster()
 	end)
 
-	local humanoid = character:WaitForChild("Humanoid", 5)
-	if humanoid and humanoid:IsA("Humanoid") then
-		-- Track position for leave drops
-		task.spawn(function()
-			while character.Parent and player.Parent do
-				local root = character:FindFirstChild("HumanoidRootPart")
-				if root and root:IsA("BasePart") then
-					lastPositions[player] = root.Position
-				end
-				task.wait(0.5)
+	task.spawn(function()
+		while character.Parent and player.Parent and partyMembers[player] do
+			local root = character:FindFirstChild("HumanoidRootPart")
+			if root and root:IsA("BasePart") then
+				lastPositions[player] = root.Position
 			end
-		end)
-	end
+			task.wait(0.5)
+		end
+	end)
 end
 
 local function bindDropRemote()
@@ -229,6 +254,9 @@ local function bindDropRemote()
 end
 
 local function handleLeave(player: Player)
+	if not partyMembers[player] then
+		return
+	end
 	local st = status[player]
 	if st == "Alive" or st == "Downed" then
 		local pos = lastPositions[player]
@@ -243,18 +271,209 @@ local function handleLeave(player: Player)
 	securedValue[player] = nil
 	securedItems[player] = nil
 	lastPositions[player] = nil
+	partyMembers[player] = nil
+	if characterConns[player] then
+		characterConns[player]:Disconnect()
+		characterConns[player] = nil
+	end
 	broadcastRoster()
 	task.defer(checkMatchEnd)
 end
 
-function MatchService.init()
-	if started then
+local function hookPartyPlayer(player: Player)
+	partyMembers[player] = true
+	registerPlayer(player)
+	if characterConns[player] then
+		characterConns[player]:Disconnect()
+	end
+	characterConns[player] = player.CharacterAdded:Connect(function(character)
+		onCharacter(player, character)
+	end)
+	if player.Character then
+		onCharacter(player, player.Character)
+	else
+		task.defer(function()
+			teleportToSpawn(player)
+		end)
+	end
+end
+
+local function installStudioDebug()
+	if not game:GetService("RunService"):IsStudio() then
+		return
+	end
+	local ServerStorage = game:GetService("ServerStorage")
+	local debugFolder = ServerStorage:FindFirstChild("GorynychDebug")
+	if not debugFolder then
+		debugFolder = Instance.new("Folder")
+		debugFolder.Name = "GorynychDebug"
+		debugFolder.Parent = ServerStorage
+	end
+
+	local function ensureFn(name: string, onInvoke: (...any) -> any)
+		local existing = debugFolder:FindFirstChild(name)
+		if existing then
+			existing:Destroy()
+		end
+		local fn = Instance.new("BindableFunction")
+		fn.Name = name
+		fn.Parent = debugFolder
+		fn.OnInvoke = onInvoke
+	end
+
+	ensureFn("ApplyDamage", function(userId: number, amount: number)
+		local target = Players:GetPlayerByUserId(userId)
+		if not target then
+			return "NoPlayer"
+		end
+		DamageService.applyDamage(target, amount, "Debug")
+		return {
+			Status = target:GetAttribute("MatchStatus"),
+			Downed = DownedService.isDowned(target),
+			Bleedout = DownedService.getBleedoutRemaining(target),
+			MatchActive = NoiseService.isMatchActive(),
+			HP = DamageService.getHP(target),
+		}
+	end)
+
+	ensureFn("ForceExtract", function(userId: number, value: number, items: number)
+		local target = Players:GetPlayerByUserId(userId)
+		if not target then
+			return "NoPlayer"
+		end
+		MatchService.setExtracted(target, value, items)
+		return {
+			Status = target:GetAttribute("MatchStatus"),
+			MatchActive = NoiseService.isMatchActive(),
+		}
+	end)
+
+	ensureFn("ForceBleedout", function(userId: number)
+		local target = Players:GetPlayerByUserId(userId)
+		if not target then
+			return "NoPlayer"
+		end
+		local ok = DownedService.debugExpireBleedout(target)
+		task.wait(0.15)
+		return {
+			Ok = ok,
+			Status = target:GetAttribute("MatchStatus"),
+			MatchActive = NoiseService.isMatchActive(),
+			Downed = DownedService.isDowned(target),
+		}
+	end)
+
+	ensureFn("AddNoise", function(amount: number)
+		NoiseService.add(amount, "Debug", Vector3.new(0, 5, 0))
+		return { MatchActive = NoiseService.isMatchActive() }
+	end)
+
+	ensureFn("BeginSoloMatch", function(userId: number)
+		local target = Players:GetPlayerByUserId(userId)
+		if not target then
+			return "NoPlayer"
+		end
+		MatchService.beginFromLobby({ target }, 1)
+		return { Running = MatchService.isMatchRunning() }
+	end)
+end
+
+function MatchService.teardownMatch()
+	for _, player in Players:GetPlayers() do
+		DownedService.clear(player)
+	end
+	matchRunning = false
+	matchEnded = false
+	outcome = "Ongoing"
+	table.clear(status)
+	table.clear(securedValue)
+	table.clear(securedItems)
+	table.clear(lastPositions)
+	table.clear(partyMembers)
+	for player, conn in characterConns do
+		conn:Disconnect()
+		characterConns[player] = nil
+	end
+	local dungeon = Workspace:FindFirstChild("GorynychDungeon")
+	if dungeon then
+		dungeon:Destroy()
+	end
+	if NoiseService.isMatchActive() then
+		NoiseService.endMatch()
+	end
+end
+
+function MatchService.beginFromLobby(players: { Player }, partySize: number)
+	if matchRunning and not matchEnded then
+		warn("[Gorynych] Match already running")
+		return
+	end
+	if #players == 0 then
+		return
+	end
+	if #players > partySize or partySize > MultiplayerConfig.MaxPlayersInMatch then
+		warn(`[Gorynych] Invalid party {#players}/{partySize}`)
 		return
 	end
 
+	MatchService.teardownMatch()
+	matchRunning = true
+	matchEnded = false
+	outcome = "Ongoing"
+
+	DungeonBootstrap.build()
+	ExtractionService.refreshZones()
+	LootService.init()
+	DragonService.init()
+	DragonService.reset()
+	NoiseService.startMatch()
+
+	for _, player in players do
+		hookPartyPlayer(player)
+		teleportToSpawn(player)
+	end
+	broadcastRoster()
+	print(`[Gorynych] Match started for party of {#players} (cap {partySize})`)
+end
+
+function MatchService.beginFromTeleportJoin()
+	MatchService.prepare()
+	task.defer(function()
+		task.wait(1)
+		local players = Players:GetPlayers()
+		local partySize = MultiplayerConfig.MaxPlayersInMatch
+		local first = players[1]
+		if first then
+			local data = MatchTeleport.readJoinPartyData(first)
+			if data then
+				partySize = data.PartySize
+				local allowed: { [number]: boolean } = {}
+				for _, id in data.MemberUserIds do
+					allowed[id] = true
+				end
+				local filtered = {}
+				for _, player in players do
+					if allowed[player.UserId] then
+						table.insert(filtered, player)
+					end
+				end
+				if #filtered > 0 then
+					players = filtered
+				end
+			end
+		end
+		MatchService.beginFromLobby(players, math.clamp(partySize, 1, MultiplayerConfig.MaxPlayersInMatch))
+	end)
+end
+
+function MatchService.prepare()
+	if prepared then
+		return
+	end
+	prepared = true
+
 	Remotes.init()
 	NoiseService.init()
-	NoiseService.startMatch()
 	BackpackService.init()
 	MovementModifierService.init()
 	ExtractionService.init()
@@ -278,7 +497,6 @@ function MatchService.init()
 		OnBleedoutDead = function(player)
 			setStatus(player, "Dead")
 			broadcastRoster()
-			-- Respawn as spectator corpse cleared
 			task.delay(1, function()
 				if player.Parent and status[player] == "Dead" then
 					player:LoadCharacter()
@@ -290,7 +508,7 @@ function MatchService.init()
 			return MatchService.isAlive(player)
 		end,
 		IsMatchActive = function()
-			return NoiseService.isMatchActive() and not matchEnded
+			return NoiseService.isMatchActive() and not matchEnded and matchRunning
 		end,
 	})
 
@@ -301,139 +519,30 @@ function MatchService.init()
 		MatchService.setExtracted(player, value, itemCount)
 	end)
 
-	DungeonBootstrap.build()
-	ExtractionService.refreshZones()
-	LootService.init()
-	DragonService.init()
-	DragonService.reset()
-	matchEnded = false
-	outcome = "Ongoing"
-
-	-- Roster heartbeat for bleedout remaining UI
 	task.spawn(function()
 		while true do
 			task.wait(0.5)
-			if NoiseService.isMatchActive() and not matchEnded then
+			if NoiseService.isMatchActive() and not matchEnded and matchRunning then
 				broadcastRoster()
 			end
 		end
 	end)
 
-	Players.PlayerAdded:Connect(function(player)
-		registerPlayer(player)
-		player.CharacterAdded:Connect(function(character)
-			onCharacter(player, character)
-		end)
-		if player.Character then
-			onCharacter(player, player.Character)
-		end
-		task.defer(function()
-			NoiseService.broadcastMatchState(player)
-			broadcastRoster()
-		end)
-	end)
-
 	Players.PlayerRemoving:Connect(handleLeave)
+	installStudioDebug()
+end
 
-	for _, player in Players:GetPlayers() do
-		registerPlayer(player)
-		player.CharacterAdded:Connect(function(character)
-			onCharacter(player, character)
+-- Legacy always-on (tests / no lobby): start when players present
+function MatchService.init()
+	MatchService.prepare()
+	local players = Players:GetPlayers()
+	if #players > 0 then
+		MatchService.beginFromLobby(players, math.min(#players, MultiplayerConfig.MaxPlayersInMatch))
+	else
+		Players.PlayerAdded:Once(function(player)
+			MatchService.beginFromLobby({ player }, 1)
 		end)
-		if player.Character then
-			onCharacter(player, player.Character)
-		end
 	end
-	broadcastRoster()
-	started = true
-
-	if game:GetService("RunService"):IsStudio() then
-		local ServerStorage = game:GetService("ServerStorage")
-		local debugFolder = ServerStorage:FindFirstChild("GorynychDebug")
-		if not debugFolder then
-			debugFolder = Instance.new("Folder")
-			debugFolder.Name = "GorynychDebug"
-			debugFolder.Parent = ServerStorage
-		end
-		local existing = debugFolder:FindFirstChild("ApplyDamage")
-		if existing then
-			existing:Destroy()
-		end
-		local applyDamageFn = Instance.new("BindableFunction")
-		applyDamageFn.Name = "ApplyDamage"
-		applyDamageFn.Parent = debugFolder
-		applyDamageFn.OnInvoke = function(userId: number, amount: number)
-			local target = Players:GetPlayerByUserId(userId)
-			if not target then
-				return "NoPlayer"
-			end
-			DamageService.applyDamage(target, amount, "Debug")
-			return {
-				Status = target:GetAttribute("MatchStatus"),
-				Downed = DownedService.isDowned(target),
-				Bleedout = DownedService.getBleedoutRemaining(target),
-				MatchActive = NoiseService.isMatchActive(),
-				HP = DamageService.getHP(target),
-			}
-		end
-
-		local existingExtract = debugFolder:FindFirstChild("ForceExtract")
-		if existingExtract then
-			existingExtract:Destroy()
-		end
-		local extractFn = Instance.new("BindableFunction")
-		extractFn.Name = "ForceExtract"
-		extractFn.Parent = debugFolder
-		extractFn.OnInvoke = function(userId: number, value: number, items: number)
-			local target = Players:GetPlayerByUserId(userId)
-			if not target then
-				return "NoPlayer"
-			end
-			MatchService.setExtracted(target, value, items)
-			return {
-				Status = target:GetAttribute("MatchStatus"),
-				MatchActive = NoiseService.isMatchActive(),
-			}
-		end
-
-		local existingBleed = debugFolder:FindFirstChild("ForceBleedout")
-		if existingBleed then
-			existingBleed:Destroy()
-		end
-		local bleedFn = Instance.new("BindableFunction")
-		bleedFn.Name = "ForceBleedout"
-		bleedFn.Parent = debugFolder
-		bleedFn.OnInvoke = function(userId: number)
-			local target = Players:GetPlayerByUserId(userId)
-			if not target then
-				return "NoPlayer"
-			end
-			local ok = DownedService.debugExpireBleedout(target)
-			task.wait(0.15)
-			return {
-				Ok = ok,
-				Status = target:GetAttribute("MatchStatus"),
-				MatchActive = NoiseService.isMatchActive(),
-				Downed = DownedService.isDowned(target),
-			}
-		end
-
-		local existingNoise = debugFolder:FindFirstChild("AddNoise")
-		if existingNoise then
-			existingNoise:Destroy()
-		end
-		local noiseFn = Instance.new("BindableFunction")
-		noiseFn.Name = "AddNoise"
-		noiseFn.Parent = debugFolder
-		noiseFn.OnInvoke = function(amount: number)
-			NoiseService.add(amount, "Debug", Vector3.new(0, 5, 0))
-			return {
-				MatchActive = NoiseService.isMatchActive(),
-			}
-		end
-	end
-
-	print("[Gorynych] Phase 3 match started (Downed/Revive + roster)")
 end
 
 return MatchService

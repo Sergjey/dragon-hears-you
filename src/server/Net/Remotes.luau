@@ -48,6 +48,7 @@ function Remotes.init()
 	ensure(RemoteNames.RequestRevive)
 	ensure(RemoteNames.RosterState)
 	ensure(RemoteNames.MatchEnded)
+	ensure(RemoteNames.LobbyPadState)
 end
 
 function Remotes.get(name: string): RemoteEvent
@@ -108,6 +109,10 @@ end
 
 function Remotes.matchEnded(): RemoteEvent
 	return Remotes.get(RemoteNames.MatchEnded)
+end
+
+function Remotes.lobbyPadState(): RemoteEvent
+	return Remotes.get(RemoteNames.LobbyPadState)
 end
 
 return Remotes

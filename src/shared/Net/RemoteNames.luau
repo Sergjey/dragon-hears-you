@@ -8,6 +8,7 @@ local RemoteNames = {
 	RequestRevive = "RequestRevive",
 	RosterState = "RosterState",
 	MatchEnded = "MatchEnded",
+	LobbyPadState = "LobbyPadState",
 }
 
 return RemoteNames
