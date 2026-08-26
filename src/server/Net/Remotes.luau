@@ -58,6 +58,7 @@ function Remotes.init()
 	ensure(RemoteNames.RequestUseGadget)
 	ensure(RemoteNames.EconomyState)
 	ensure(RemoteNames.GadgetFx)
+	ensure(RemoteNames.LootFx)
 end
 
 function Remotes.get(name: string): RemoteEvent
@@ -158,6 +159,10 @@ end
 
 function Remotes.gadgetFx(): RemoteEvent
 	return Remotes.get(RemoteNames.GadgetFx)
+end
+
+function Remotes.lootFx(): RemoteEvent
+	return Remotes.get(RemoteNames.LootFx)
 end
 
 return Remotes

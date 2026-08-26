@@ -11,21 +11,25 @@ Roblox experience developed with **Rojo** + **Cursor** + **official Studio MCP**
 - Working title: **Gorynych Heist** (repo: dragon-hears-you)
 - Elevator pitch: Team of thieves steals treasure from sleeping three-headed Zmey Gorynych — greed raises shared Noise and wakes the dragon.
 - Core loop: Lobby → class select → pad → dungeon → loot / noise risk → extract → sell → upgrades
-- Current phase: **Phase 6 economy** (sell Gold, DataStore, bags, class unlocks, gadgets)
-- Done: Phase 1–5 (slice, dragon AI, multiplayer Downed/Revive, lobby pads, classes)
-- Next: Phase 7 polish (anims/VFX/audio); Scout after class gameplay check
-- Out of scope still: Scout, CarryService runtime, monetization, full gadget catalog
+- Current phase: **Phase 7 polish** (audio, VFX, loot feedback, dragon warnings, UI motion)
+- Done: Phase 1–6 (slice, dragon AI, multiplayer, lobby, classes, economy)
+- Next: Phase 8 replayability; Scout after class gameplay check
+- Out of scope still: Scout, CarryService runtime, monetization, Creator Store art packs
+
+## Polish (Phase 7)
+- `AudioController` + `AudioConfig` — SFX on loot/extract/dragon/abilities; stage tension bus
+- `FeedbackController` — loot rarity popup, AbilityFx/GadgetFx particles, loot bob/spin
+- DragonEffects: stage vignette + telegraph grow; HUD noise stage pulse
+- Config: `src/shared/Config/AudioConfig.luau`, `FeedbackConfig.luau`
 
 ## Economy (Phase 6)
 - Extract credits persistent **Gold** (server); DataStore profile with `pcall` error handling
-- Lobby shop: bags (Cloth→Bag of Holding), class unlocks (Thief free), gadgets (1 slot)
-- Gadgets: Feather Boots (passive), Smoke Bomb / Dragon Bait (E, once/run)
+- Lobby shop: bags, class unlocks (Thief free), gadgets (1 slot)
 - Config: `src/shared/Config/EconomyConfig.luau`
 
 ## Classes (Phase 5)
-- Lobby UI selects class → `ClassId` attribute (locked for the run on pad start; must be unlocked)
-- Passives: Thief stealth/speed/loot; Medic revive speed; Guardian +30% HP
-- Actives (Q): Silent Step / Heal / Shield / Noise Maker — server-validated CDs
+- Lobby UI selects class → `ClassId` (locked on pad start; must be unlocked)
+- Actives (Q): Silent Step / Heal / Shield / Noise Maker
 - Config: `src/shared/Config/ClassConfig.luau`
 
 ## Lobby / teleport
@@ -36,10 +40,10 @@ Roblox experience developed with **Rojo** + **Cursor** + **official Studio MCP**
 - Intentional temporary graybox; gameplay on CollectionService tags.
 
 ## Architecture
-- Shared config: Game, Noise, Loot, Dragon, Multiplayer, Lobby, Class, Economy, Tags
-- Server: Data, Economy, Gadget, Class, Lobby, MatchTeleport, Match, Noise, Loot, Backpack, Movement, Extraction, Damage, Downed, Dragon…
-- Client: Lobby / ClassSelect / Shop / HUD / Result / Interaction / DragonEffects / Downed
-- Remotes: RequestBuy, RequestEquipLoadout, RequestUseGadget, EconomyState, GadgetFx + prior remotes
+- Shared config: Game, Noise, Loot, Dragon, Multiplayer, Lobby, Class, Economy, Audio, Feedback, Tags
+- Server: Data, Economy, Gadget, Class, Lobby, Match, Noise, Loot (+ LootFx), …
+- Client: Lobby / ClassSelect / Shop / HUD / Audio / Feedback / DragonEffects / Result / Downed
+- Remotes: LootFx + prior remotes
 
 ## Agent shortcuts
 - Project rules: `.cursor/rules/`
