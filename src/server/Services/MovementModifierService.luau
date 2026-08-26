@@ -17,6 +17,8 @@ type PlayerMoveState = {
 }
 
 local states: { [Player]: PlayerMoveState } = {}
+local freezeUntil: { [Player]: number } = {}
+local slowUntil: { [Player]: { Until: number, Multiplier: number } } = {}
 local heartbeatConn: RBXScriptConnection? = nil
 
 local function getTier(fillRatio: number): { SpeedMultiplier: number, FootstepNoiseMultiplier: number }
@@ -52,9 +54,30 @@ function MovementModifierService.applyForPlayer(player: Player)
 		return
 	end
 
+	local now = os.clock()
+	if freezeUntil[player] and freezeUntil[player] > now then
+		humanoid.WalkSpeed = 0
+		return
+	end
+
 	local fill = BackpackService.getFillRatio(player)
 	local tier = getTier(fill)
-	humanoid.WalkSpeed = GameConfig.DefaultWalkSpeed * tier.SpeedMultiplier
+	local speed = GameConfig.DefaultWalkSpeed * tier.SpeedMultiplier
+	local slow = slowUntil[player]
+	if slow and slow.Until > now then
+		speed *= slow.Multiplier
+	end
+	humanoid.WalkSpeed = speed
+end
+
+function MovementModifierService.freeze(player: Player, duration: number)
+	freezeUntil[player] = os.clock() + duration
+	MovementModifierService.applyForPlayer(player)
+end
+
+function MovementModifierService.applySlow(player: Player, duration: number, multiplier: number)
+	slowUntil[player] = { Until = os.clock() + duration, Multiplier = multiplier }
+	MovementModifierService.applyForPlayer(player)
 end
 
 function MovementModifierService.getFootstepMultiplier(player: Player): number
@@ -66,6 +89,16 @@ local function samplePlayer(player: Player, dt: number)
 		return
 	end
 
+	local now = os.clock()
+	if freezeUntil[player] and freezeUntil[player] <= now then
+		freezeUntil[player] = nil
+		MovementModifierService.applyForPlayer(player)
+	end
+	if slowUntil[player] and slowUntil[player].Until <= now then
+		slowUntil[player] = nil
+		MovementModifierService.applyForPlayer(player)
+	end
+
 	local character = player.Character
 	if not character then
 		return
@@ -73,6 +106,10 @@ local function samplePlayer(player: Player, dt: number)
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	local root = character:FindFirstChild("HumanoidRootPart")
 	if not humanoid or not root or not root:IsA("BasePart") then
+		return
+	end
+
+	if freezeUntil[player] and freezeUntil[player] > now then
 		return
 	end
 
@@ -152,6 +189,8 @@ function MovementModifierService.init()
 	end)
 	Players.PlayerRemoving:Connect(function(player)
 		states[player] = nil
+		freezeUntil[player] = nil
+		slowUntil[player] = nil
 	end)
 
 	for _, player in Players:GetPlayers() do

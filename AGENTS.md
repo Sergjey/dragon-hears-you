@@ -11,16 +11,17 @@ Roblox experience developed with **Rojo** + **Cursor** + **official Studio MCP**
 - Working title: **Gorynych Heist** (repo: dragon-hears-you)
 - Elevator pitch: Team of thieves steals treasure from sleeping three-headed Zmey Gorynych — greed raises shared Noise and wakes the dragon.
 - Core loop: Lobby → loadout → dungeon → loot / noise risk → extract → sell → upgrades
-- Current phase: **Phase 1 vertical slice** (solo dungeon bootstrap, backpack loot, noise meter, extraction, result UI)
-- Next: Phase 2 dragon stages / AI state machine
-- Out of scope for Phase 1: CarryLoot runtime, classes, lobby pads, DataStore economy, monetization
+- Current phase: **Phase 2 dragon stages / AI** (state machine, Disturbed events, Partial/Full hunting, HP/death)
+- Done: Phase 1 vertical slice (dungeon, backpack loot, noise, extraction, result UI)
+- Next: Phase 3 multiplayer (shared noise already, downed/revive, team extract edge cases)
+- Out of scope still: lobby pads, classes, CarryService runtime, DataStore economy, monetization
 
-## Architecture (Phase 1)
-- Shared config: `src/shared/Config/{Game,Noise,Loot,Tags}`
-- Server services: Match, Noise, Loot, Backpack, MovementModifier, Extraction
-- Client: HUD / Result / Interaction controllers
-- Remotes created at runtime under `ReplicatedStorage.Remotes`
-- Map: procedural `DungeonBootstrap` (CollectionService tags); replace with Studio art later
+## Architecture
+- Shared config: `src/shared/Config/{Game,Noise,Loot,Dragon,Tags}`
+- Server services: Match, Noise, Loot, Backpack, MovementModifier, Extraction, Damage, Dragon, DragonPerception
+- Client: HUD / Result / Interaction / DragonEffects
+- Remotes: MatchState, ExtractionState, MatchResult, RequestDropLoot, DragonState, DragonEvent
+- Map: procedural `DungeonBootstrap` (CollectionService tags)
 
 ## Visual
 - Tokens + polish rules: skill `roblox-ui-polish`, rule `roblox-ui`

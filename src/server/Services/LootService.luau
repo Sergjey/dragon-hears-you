@@ -107,6 +107,41 @@ local function bindLoot(instance: Instance)
 	end)
 end
 
+function LootService.spawnDroppedLoot(lootId: string, position: Vector3): BasePart?
+	local def = LootConfig.get(lootId)
+	if not def or def.LootType ~= "Backpack" then
+		return nil
+	end
+
+	local parent = game:GetService("Workspace"):FindFirstChild("GorynychDungeon")
+	local lootFolder = if parent then parent:FindFirstChild("Loot") else nil
+	if not lootFolder then
+		lootFolder = game:GetService("Workspace")
+	end
+
+	local loot = Instance.new("Part")
+	loot.Name = lootId
+	loot.Size = Vector3.new(1.5, 1.5, 1.5)
+	loot.CFrame = CFrame.new(position + Vector3.new(0, 2, 0))
+	loot.Color = Color3.fromRGB(220, 180, 60)
+	loot.Material = Enum.Material.Metal
+	loot.Anchored = true
+	loot.CanCollide = true
+	loot.Parent = lootFolder
+	loot:SetAttribute("LootId", lootId)
+
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.ActionText = "Steal"
+	prompt.ObjectText = lootId
+	prompt.HoldDuration = 0.35
+	prompt.MaxActivationDistance = 10
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = loot
+
+	CollectionService:AddTag(loot, Tags.Loot)
+	return loot
+end
+
 function LootService.init()
 	if started then
 		for _, instance in CollectionService:GetTagged(Tags.Loot) do

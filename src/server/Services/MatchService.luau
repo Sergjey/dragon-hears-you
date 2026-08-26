@@ -4,6 +4,8 @@ local Remotes = require(script.Parent.Parent.Net.Remotes)
 local DungeonBootstrap = require(script.Parent.Parent.Bootstrap.DungeonBootstrap)
 
 local BackpackService = require(script.Parent.BackpackService)
+local DamageService = require(script.Parent.DamageService)
+local DragonService = require(script.Parent.DragonService)
 local ExtractionService = require(script.Parent.ExtractionService)
 local LootService = require(script.Parent.LootService)
 local MovementModifierService = require(script.Parent.MovementModifierService)
@@ -70,12 +72,15 @@ function MatchService.init()
 	BackpackService.init()
 	MovementModifierService.init()
 	ExtractionService.init()
+	DamageService.init()
 	bindDropRemote()
 
 	DungeonBootstrap.build()
 	ExtractionService.refreshZones()
 	LootService.init()
 	NoiseService.startMatch()
+	DragonService.init()
+	DragonService.reset()
 
 	Players.PlayerAdded:Connect(function(player)
 		player.CharacterAdded:Connect(function(character)
@@ -85,6 +90,7 @@ function MatchService.init()
 			onCharacter(player, player.Character)
 		end
 		ExtractionService.resetPlayer(player)
+		DamageService.resetPlayer(player)
 		task.defer(function()
 			NoiseService.broadcastMatchState(player)
 		end)
@@ -97,6 +103,7 @@ function MatchService.init()
 		if player.Character then
 			onCharacter(player, player.Character)
 		end
+		DamageService.resetPlayer(player)
 	end
 end
 
