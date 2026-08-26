@@ -43,6 +43,8 @@ function Remotes.init()
 	ensure(RemoteNames.MatchState)
 	ensure(RemoteNames.ExtractionState)
 	ensure(RemoteNames.MatchResult)
+	ensure(RemoteNames.DragonState)
+	ensure(RemoteNames.DragonEvent)
 end
 
 function Remotes.get(name: string): RemoteEvent
@@ -83,6 +85,14 @@ end
 
 function Remotes.matchResult(): RemoteEvent
 	return Remotes.get(RemoteNames.MatchResult)
+end
+
+function Remotes.dragonState(): RemoteEvent
+	return Remotes.get(RemoteNames.DragonState)
+end
+
+function Remotes.dragonEvent(): RemoteEvent
+	return Remotes.get(RemoteNames.DragonEvent)
 end
 
 return Remotes

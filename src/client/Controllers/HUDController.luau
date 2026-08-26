@@ -24,6 +24,8 @@ local stageLabel: TextLabel
 local extractFrame: Frame
 local extractFill: Frame
 local extractLabel: TextLabel
+local hpLabel: TextLabel
+local hpFill: Frame
 
 local function noiseColor(noise: number, maxNoise: number): Color3
 	local t = GameConfig.StageThresholds
@@ -177,6 +179,58 @@ local function ensureGui()
 	goldLabel.Text = "$0"
 	goldLabel.Parent = bag
 
+	-- HP chip top-left
+	local hpChip = Instance.new("Frame")
+	hpChip.Name = "HPChip"
+	hpChip.AnchorPoint = Vector2.new(0, 0)
+	hpChip.Position = UDim2.fromScale(0.03, 0.04)
+	hpChip.Size = UDim2.fromScale(0.18, 0.07)
+	hpChip.BackgroundColor3 = Tokens.Panel
+	hpChip.BackgroundTransparency = 0.12
+	hpChip.BorderSizePixel = 0
+	hpChip.Parent = gui
+
+	local hpCorner = Instance.new("UICorner")
+	hpCorner.CornerRadius = UDim.new(0, 10)
+	hpCorner.Parent = hpChip
+
+	local hpStroke = Instance.new("UIStroke")
+	hpStroke.Color = Tokens.Danger
+	hpStroke.Transparency = 0.5
+	hpStroke.Parent = hpChip
+
+	hpLabel = Instance.new("TextLabel")
+	hpLabel.BackgroundTransparency = 1
+	hpLabel.Position = UDim2.fromScale(0.08, 0.08)
+	hpLabel.Size = UDim2.fromScale(0.84, 0.4)
+	hpLabel.Font = Enum.Font.GothamBold
+	hpLabel.TextSize = 14
+	hpLabel.TextColor3 = Tokens.TextPrimary
+	hpLabel.TextXAlignment = Enum.TextXAlignment.Left
+	hpLabel.Text = "HP 100"
+	hpLabel.Parent = hpChip
+
+	local hpTrack = Instance.new("Frame")
+	hpTrack.Position = UDim2.fromScale(0.08, 0.58)
+	hpTrack.Size = UDim2.fromScale(0.84, 0.28)
+	hpTrack.BackgroundColor3 = Tokens.BgDeep
+	hpTrack.BorderSizePixel = 0
+	hpTrack.Parent = hpChip
+
+	local hpTrackCorner = Instance.new("UICorner")
+	hpTrackCorner.CornerRadius = UDim.new(0, 6)
+	hpTrackCorner.Parent = hpTrack
+
+	hpFill = Instance.new("Frame")
+	hpFill.Size = UDim2.fromScale(1, 1)
+	hpFill.BackgroundColor3 = Tokens.Danger
+	hpFill.BorderSizePixel = 0
+	hpFill.Parent = hpTrack
+
+	local hpFillCorner = Instance.new("UICorner")
+	hpFillCorner.CornerRadius = UDim.new(0, 6)
+	hpFillCorner.Parent = hpFill
+
 	-- Extraction progress (hidden by default)
 	extractFrame = Instance.new("Frame")
 	extractFrame.Name = "Extraction"
@@ -237,9 +291,27 @@ local function applyMatchState(payload: MatchStatePayload)
 	}):Play()
 
 	noiseLabel.Text = string.format("%d%%", math.floor(payload.Noise + 0.5))
-	stageLabel.Text = "NOISE — " .. string.upper(payload.Stage)
+	local stageText = string.upper(payload.Stage)
+	if payload.Stage == "FullAwake" then
+		stageText = "FULL AWAKE — RUN"
+	end
+	stageLabel.Text = "NOISE — " .. stageText
 	bagLabel.Text = string.format("BAG %d / %d", payload.BagUsed, payload.BagCapacity)
 	goldLabel.Text = Format.gold(payload.BagValue)
+end
+
+local function applyHP()
+	local current = player:GetAttribute("HP")
+	local maxHp = player:GetAttribute("MaxHP")
+	if typeof(current) ~= "number" then
+		current = 100
+	end
+	if typeof(maxHp) ~= "number" or maxHp <= 0 then
+		maxHp = 100
+	end
+	hpLabel.Text = string.format("HP %d", math.floor(current :: number))
+	local ratio = math.clamp((current :: number) / (maxHp :: number), 0, 1)
+	hpFill.Size = UDim2.fromScale(ratio, 1)
 end
 
 local function applyExtraction(payload: ExtractionStatePayload)
@@ -261,6 +333,7 @@ end
 
 function HUDController.start()
 	ensureGui()
+	applyHP()
 
 	RemotesClient.matchState().OnClientEvent:Connect(function(payload: any)
 		if typeof(payload) ~= "table" then
@@ -275,6 +348,9 @@ function HUDController.start()
 		end
 		applyExtraction(payload :: ExtractionStatePayload)
 	end)
+
+	player:GetAttributeChangedSignal("HP"):Connect(applyHP)
+	player:GetAttributeChangedSignal("MaxHP"):Connect(applyHP)
 end
 
 return HUDController

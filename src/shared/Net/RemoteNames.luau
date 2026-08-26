@@ -3,6 +3,8 @@ local RemoteNames = {
 	MatchState = "MatchState",
 	ExtractionState = "ExtractionState",
 	MatchResult = "MatchResult",
+	DragonState = "DragonState",
+	DragonEvent = "DragonEvent",
 }
 
 return RemoteNames

@@ -17,12 +17,16 @@ local NoiseService = {}
 local noise = 0
 local decayAccumulator = 0
 local matchActive = false
+local fullAwakeLocked = false
 local heartbeatConn: RBXScriptConnection? = nil
 local noiseListeners: { (amount: number, source: string, position: Vector3?) -> () } = {}
 
 local function stageFromNoise(value: number): DragonStage
+	if fullAwakeLocked then
+		return "FullAwake"
+	end
 	local t = GameConfig.StageThresholds
-	if value >= 100 then
+	if value > t.PartialWake then
 		return "FullAwake"
 	elseif value > t.Disturbed then
 		return "PartialWake"
@@ -55,6 +59,15 @@ end
 
 function NoiseService.getStage(): DragonStage
 	return stageFromNoise(noise)
+end
+
+function NoiseService.isFullAwakeLocked(): boolean
+	return fullAwakeLocked
+end
+
+function NoiseService.setFullAwakeLocked(locked: boolean)
+	fullAwakeLocked = locked
+	NoiseService.broadcastMatchState()
 end
 
 function NoiseService.isMatchActive(): boolean
@@ -97,6 +110,7 @@ function NoiseService.startMatch()
 	matchActive = true
 	noise = 0
 	decayAccumulator = 0
+	fullAwakeLocked = false
 	NoiseService.broadcastMatchState()
 end
 
@@ -108,6 +122,7 @@ end
 function NoiseService.reset()
 	noise = 0
 	decayAccumulator = 0
+	fullAwakeLocked = false
 	NoiseService.broadcastMatchState()
 end
 
@@ -120,7 +135,9 @@ function NoiseService.init()
 		if not matchActive then
 			return
 		end
-		decayAccumulator += dt
+		-- While Fully Awake, noise still can rise but decay is slower (keep pressure)
+		local decayMul = if fullAwakeLocked then 0.35 else 1
+		decayAccumulator += dt * decayMul
 		while decayAccumulator >= NoiseConfig.DecayIntervalSeconds do
 			decayAccumulator -= NoiseConfig.DecayIntervalSeconds
 			if noise > NoiseConfig.Min then

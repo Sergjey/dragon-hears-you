@@ -37,4 +37,12 @@ function RemotesClient.requestDropLoot(): RemoteEvent
 	return RemotesClient.getEvent(RemoteNames.RequestDropLoot)
 end
 
+function RemotesClient.dragonState(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.DragonState)
+end
+
+function RemotesClient.dragonEvent(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.DragonEvent)
+end
+
 return RemotesClient
