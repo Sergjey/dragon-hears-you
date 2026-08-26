@@ -57,4 +57,8 @@ function RemotesClient.matchEnded(): RemoteEvent
 	return RemotesClient.getEvent(RemoteNames.MatchEnded)
 end
 
+function RemotesClient.lobbyPadState(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.LobbyPadState)
+end
+
 return RemotesClient

@@ -361,7 +361,8 @@ local function tickHunting(dt: number)
 		lastKnownPos = hear.Position
 	end
 	for _, player in Players:GetPlayers() do
-		if DamageService.isDead(player) then
+		-- Skip Downed / Dead / Extracted — do not retarget or feed hunt on out-of-fight players
+		if DamageService.isDownedOrDead(player) then
 			continue
 		end
 		local red = getHead("Red")

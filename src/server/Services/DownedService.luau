@@ -226,22 +226,25 @@ function DownedService.clear(player: Player)
 	end
 end
 
+-- Studio / tests: expire bleedout on next Heartbeat
+function DownedService.debugExpireBleedout(player: Player): boolean
+	local session = sessions[player]
+	if not session then
+		return false
+	end
+	session.BleedoutRemaining = 0
+	return true
+end
+
 function DownedService.init()
 	if started then
 		return
 	end
 	started = true
 
-	Remotes.requestRevive().OnServerEvent:Connect(function(reviver: Player, targetUserId: unknown)
-		if typeof(targetUserId) ~= "number" then
-			return
-		end
-		local target = Players:GetPlayerByUserId(targetUserId :: number)
-		if not target then
-			return
-		end
-		DownedService.tryRevive(reviver, target)
-	end)
+	-- Revive is ProximityPrompt-only (HoldDuration = ReviveHoldSeconds).
+	-- Ignore RequestRevive so clients cannot skip the hold.
+	Remotes.requestRevive().OnServerEvent:Connect(function(_reviver: Player, _targetUserId: unknown) end)
 
 	Players.PlayerRemoving:Connect(function(player)
 		DownedService.clear(player)

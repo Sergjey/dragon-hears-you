@@ -179,17 +179,11 @@ function MovementModifierService.init()
 		NoiseService.broadcastMatchState()
 	end)
 
-	local function hookCharacter(player: Player, character: Model)
+	local function hookCharacter(player: Player, _character: Model)
 		ensureState(player)
 		task.defer(function()
 			MovementModifierService.applyForPlayer(player)
 		end)
-		local humanoid = character:WaitForChild("Humanoid", 5)
-		if humanoid and humanoid:IsA("Humanoid") then
-			humanoid.Died:Connect(function()
-				-- Future: drop loot on death; Phase 1 clears nothing special yet
-			end)
-		end
 	end
 
 	Players.PlayerAdded:Connect(function(player)

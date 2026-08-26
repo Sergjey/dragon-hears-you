@@ -2,7 +2,6 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
 
 local MultiplayerConfig = require(ReplicatedStorage.Shared.Config.MultiplayerConfig)
 local RemotesClient = require(ReplicatedStorage.Shared.Net.RemotesClient)
@@ -155,7 +154,7 @@ local function updateHints()
 	nearbyDowned = findNearbyDowned()
 	if nearbyDowned then
 		hintLabel.Visible = true
-		hintLabel.Text = string.format("Hold interact near %s to revive", nearbyDowned.DisplayName)
+		hintLabel.Text = string.format("Hold prompt near %s to revive (%.0fs)", nearbyDowned.DisplayName, MultiplayerConfig.ReviveHoldSeconds)
 		hintLabel.TextColor3 = Tokens.AccentGold
 	else
 		hintLabel.Visible = false
@@ -185,19 +184,6 @@ function DownedController.start()
 				localBleedout = entry.BleedoutRemaining
 				break
 			end
-		end
-	end)
-
-	UserInputService.InputBegan:Connect(function(input, processed)
-		if processed then
-			return
-		end
-		if input.KeyCode ~= Enum.KeyCode.E and input.KeyCode ~= Enum.KeyCode.ButtonX then
-			return
-		end
-		local target = findNearbyDowned()
-		if target then
-			RemotesClient.requestRevive():FireServer(target.UserId)
 		end
 	end)
 
