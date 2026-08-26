@@ -2,6 +2,7 @@ local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
+local ClassConfig = require(ReplicatedStorage.Shared.Config.ClassConfig)
 local LootConfig = require(ReplicatedStorage.Shared.Config.LootConfig)
 local Tags = require(ReplicatedStorage.Shared.Config.Tags)
 
@@ -109,6 +110,12 @@ local function bindLoot(instance: Instance)
 
 	promptConnections[prompt] = prompt.Triggered:Connect(function(player: Player)
 		tryPickup(player, instance)
+	end)
+
+	prompt.PromptButtonHoldBegan:Connect(function(player: Player)
+		local bonus = ClassConfig.get(player:GetAttribute("ClassId") :: any).LootPromptSpeedBonus
+		local base = 0.35
+		prompt.HoldDuration = base / (1 + math.max(bonus, 0))
 	end)
 end
 

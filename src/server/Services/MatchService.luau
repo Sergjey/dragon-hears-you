@@ -2,13 +2,13 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
-local DragonConfig = require(ReplicatedStorage.Shared.Config.DragonConfig)
 local MultiplayerConfig = require(ReplicatedStorage.Shared.Config.MultiplayerConfig)
 local MultiplayerTypes = require(ReplicatedStorage.Shared.Types.MultiplayerTypes)
 local Remotes = require(script.Parent.Parent.Net.Remotes)
 local DungeonBootstrap = require(script.Parent.Parent.Bootstrap.DungeonBootstrap)
 
 local BackpackService = require(script.Parent.BackpackService)
+local ClassService = require(script.Parent.ClassService)
 local DamageService = require(script.Parent.DamageService)
 local DownedService = require(script.Parent.DownedService)
 local DragonService = require(script.Parent.DragonService)
@@ -74,7 +74,7 @@ local function broadcastRoster()
 				Name = player.DisplayName,
 				Status = st,
 				HP = DamageService.getHP(player),
-				MaxHP = DragonConfig.MaxPlayerHP,
+				MaxHP = DamageService.getMaxHP(player),
 				BleedoutRemaining = if st == "Downed" then DownedService.getBleedoutRemaining(player) else nil,
 			})
 		end
@@ -381,6 +381,7 @@ end
 function MatchService.teardownMatch()
 	for _, player in Players:GetPlayers() do
 		DownedService.clear(player)
+		ClassService.unlockAfterMatch(player)
 	end
 	matchRunning = false
 	matchEnded = false
@@ -429,6 +430,7 @@ function MatchService.beginFromLobby(players: { Player }, partySize: number)
 	NoiseService.startMatch()
 
 	for _, player in players do
+		ClassService.lockForMatch(player)
 		hookPartyPlayer(player)
 		teleportToSpawn(player)
 	end
@@ -479,6 +481,7 @@ function MatchService.prepare()
 	ExtractionService.init()
 	DownedService.init()
 	DamageService.init()
+	ClassService.init()
 	bindDropRemote()
 
 	DamageService.bindCanTakeDamage(function(player)

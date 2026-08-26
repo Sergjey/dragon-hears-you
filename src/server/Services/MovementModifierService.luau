@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
+local ClassConfig = require(ReplicatedStorage.Shared.Config.ClassConfig)
 local NoiseConfig = require(ReplicatedStorage.Shared.Config.NoiseConfig)
 
 local BackpackService = require(script.Parent.BackpackService)
@@ -69,7 +70,8 @@ function MovementModifierService.applyForPlayer(player: Player)
 
 	local fill = BackpackService.getFillRatio(player)
 	local tier = getTier(fill)
-	local speed = GameConfig.DefaultWalkSpeed * tier.SpeedMultiplier
+	local classDef = ClassConfig.get(player:GetAttribute("ClassId") :: any)
+	local speed = GameConfig.DefaultWalkSpeed * tier.SpeedMultiplier * classDef.WalkSpeedMultiplier
 	local slow = slowUntil[player]
 	if slow and slow.Until > now then
 		speed *= slow.Multiplier
@@ -89,7 +91,14 @@ function MovementModifierService.applySlow(player: Player, duration: number, mul
 end
 
 function MovementModifierService.getFootstepMultiplier(player: Player): number
-	return getTier(BackpackService.getFillRatio(player)).FootstepNoiseMultiplier
+	local bagMul = getTier(BackpackService.getFillRatio(player)).FootstepNoiseMultiplier
+	local classMul = ClassConfig.get(player:GetAttribute("ClassId") :: any).FootstepNoiseMultiplier
+	return bagMul * classMul
+end
+
+local function isSilentStep(player: Player): boolean
+	local untilT = player:GetAttribute("SilentStepUntil")
+	return typeof(untilT) == "number" and (untilT :: number) > os.clock()
 end
 
 local function samplePlayer(player: Player, dt: number)
@@ -127,6 +136,9 @@ local function samplePlayer(player: Player, dt: number)
 	end
 
 	local state = ensureState(player)
+	if isSilentStep(player) then
+		return
+	end
 	local footMul = MovementModifierService.getFootstepMultiplier(player)
 
 	-- Jump noise on rising edge of Jump state

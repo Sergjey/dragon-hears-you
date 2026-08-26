@@ -49,6 +49,10 @@ function Remotes.init()
 	ensure(RemoteNames.RosterState)
 	ensure(RemoteNames.MatchEnded)
 	ensure(RemoteNames.LobbyPadState)
+	ensure(RemoteNames.RequestSetClass)
+	ensure(RemoteNames.ClassState)
+	ensure(RemoteNames.RequestUseAbility)
+	ensure(RemoteNames.AbilityFx)
 end
 
 function Remotes.get(name: string): RemoteEvent
@@ -113,6 +117,22 @@ end
 
 function Remotes.lobbyPadState(): RemoteEvent
 	return Remotes.get(RemoteNames.LobbyPadState)
+end
+
+function Remotes.requestSetClass(): RemoteEvent
+	return Remotes.get(RemoteNames.RequestSetClass)
+end
+
+function Remotes.classState(): RemoteEvent
+	return Remotes.get(RemoteNames.ClassState)
+end
+
+function Remotes.requestUseAbility(): RemoteEvent
+	return Remotes.get(RemoteNames.RequestUseAbility)
+end
+
+function Remotes.abilityFx(): RemoteEvent
+	return Remotes.get(RemoteNames.AbilityFx)
 end
 
 return Remotes
