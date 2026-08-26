@@ -30,6 +30,7 @@ local extractFill: Frame
 local extractLabel: TextLabel
 local walletGold = 0
 local runBagValue = 0
+local lastNoiseStage: string? = nil
 
 local function refreshGoldLabel()
 	if not goldLabel then
@@ -463,6 +464,18 @@ local function applyMatchState(payload: MatchStatePayload)
 		stageText = "FULL AWAKE — RUN"
 	end
 	stageLabel.Text = "NOISE — " .. stageText
+	if lastNoiseStage ~= nil and lastNoiseStage ~= payload.Stage then
+		stageLabel.TextTransparency = 0.5
+		TweenService:Create(stageLabel, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			TextTransparency = 0,
+		}):Play()
+		local original = noiseFill.Size
+		noiseFill.Size = UDim2.fromScale(original.X.Scale, 1.35)
+		TweenService:Create(noiseFill, TweenInfo.new(0.25), {
+			Size = UDim2.fromScale(original.X.Scale, 1),
+		}):Play()
+	end
+	lastNoiseStage = payload.Stage
 	bagLabel.Text = string.format("BAG %d / %d", payload.BagUsed, payload.BagCapacity)
 	runBagValue = payload.BagValue
 	refreshGoldLabel()

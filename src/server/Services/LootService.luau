@@ -8,6 +8,7 @@ local Tags = require(ReplicatedStorage.Shared.Config.Tags)
 
 local BackpackService = require(script.Parent.BackpackService)
 local NoiseService = require(script.Parent.NoiseService)
+local Remotes = require(script.Parent.Parent.Net.Remotes)
 
 local LootService = {}
 
@@ -85,6 +86,13 @@ local function tryPickup(player: Player, lootInstance: Instance)
 	local def = LootConfig.get(lootId)
 	if def then
 		NoiseService.add(def.PickupNoise, "LootPickup", lootPart.Position)
+		Remotes.lootFx():FireClient(player, {
+			UserId = player.UserId,
+			LootId = def.Id,
+			Rarity = def.Rarity,
+			Value = def.Value,
+			Position = lootPart.Position,
+		})
 	end
 
 	local prompt = lootInstance:FindFirstChildOfClass("ProximityPrompt")

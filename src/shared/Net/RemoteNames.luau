@@ -18,6 +18,7 @@ local RemoteNames = {
 	RequestUseGadget = "RequestUseGadget",
 	EconomyState = "EconomyState",
 	GadgetFx = "GadgetFx",
+	LootFx = "LootFx",
 }
 
 return RemoteNames

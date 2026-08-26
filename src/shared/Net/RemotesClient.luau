@@ -97,4 +97,8 @@ function RemotesClient.gadgetFx(): RemoteEvent
 	return RemotesClient.getEvent(RemoteNames.GadgetFx)
 end
 
+function RemotesClient.lootFx(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.LootFx)
+end
+
 return RemotesClient

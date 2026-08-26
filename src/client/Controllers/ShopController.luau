@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
 local ClassConfig = require(ReplicatedStorage.Shared.Config.ClassConfig)
@@ -174,13 +175,18 @@ local function ensureGui()
 	gui.Parent = playerGui
 
 	local panel = Instance.new("Frame")
+	panel.Name = "Panel"
 	panel.AnchorPoint = Vector2.new(1, 0.5)
-	panel.Position = UDim2.fromScale(0.98, 0.45)
+	panel.Position = UDim2.fromScale(1.25, 0.45)
 	panel.Size = UDim2.fromScale(0.24, 0.55)
 	panel.BackgroundColor3 = Tokens.Panel
 	panel.BackgroundTransparency = 0.08
 	panel.BorderSizePixel = 0
 	panel.Parent = gui
+
+	TweenService:Create(panel, TweenInfo.new(0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Position = UDim2.fromScale(0.98, 0.45),
+	}):Play()
 
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 12)
