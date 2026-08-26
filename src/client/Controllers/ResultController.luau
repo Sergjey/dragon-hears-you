@@ -5,15 +5,18 @@ local TweenService = game:GetService("TweenService")
 local Format = require(ReplicatedStorage.Shared.Utils.Format)
 local RemotesClient = require(ReplicatedStorage.Shared.Net.RemotesClient)
 local MatchTypes = require(ReplicatedStorage.Shared.Types.MatchTypes)
+local MultiplayerTypes = require(ReplicatedStorage.Shared.Types.MultiplayerTypes)
 local Tokens = require(script.Parent.Parent.UI.Tokens)
 
 type MatchResultPayload = MatchTypes.MatchResultPayload
+type MatchEndedPayload = MultiplayerTypes.MatchEndedPayload
 
 local ResultController = {}
 
 local player = Players.LocalPlayer
+local matchEndedShown = false
 
-local function showResult(payload: MatchResultPayload)
+local function showPanel(titleText: string, valueText: string, subtitleText: string, accent: Color3)
 	local playerGui = player:WaitForChild("PlayerGui") :: PlayerGui
 	local existing = playerGui:FindFirstChild("GorynychResult")
 	if existing then
@@ -48,7 +51,7 @@ local function showResult(payload: MatchResultPayload)
 	corner.Parent = panel
 
 	local stroke = Instance.new("UIStroke")
-	stroke.Color = Tokens.AccentGold
+	stroke.Color = accent
 	stroke.Thickness = 1.5
 	stroke.Transparency = 0.25
 	stroke.Parent = panel
@@ -64,7 +67,7 @@ local function showResult(payload: MatchResultPayload)
 	title.Font = Enum.Font.GothamBold
 	title.TextSize = 28
 	title.TextColor3 = Tokens.TextPrimary
-	title.Text = "LOOT SECURED"
+	title.Text = titleText
 	title.Parent = panel
 
 	local value = Instance.new("TextLabel")
@@ -74,7 +77,7 @@ local function showResult(payload: MatchResultPayload)
 	value.Font = Enum.Font.GothamBold
 	value.TextSize = 36
 	value.TextColor3 = Tokens.AccentGold
-	value.Text = Format.gold(payload.SecuredValue)
+	value.Text = valueText
 	value.Parent = panel
 
 	local subtitle = Instance.new("TextLabel")
@@ -84,7 +87,7 @@ local function showResult(payload: MatchResultPayload)
 	subtitle.Font = Enum.Font.Gotham
 	subtitle.TextSize = 16
 	subtitle.TextColor3 = Tokens.TextMuted
-	subtitle.Text = string.format("%d item(s) extracted — Phase 1 slice", payload.ItemCount)
+	subtitle.Text = subtitleText
 	subtitle.Parent = panel
 
 	panel.Size = UDim2.fromScale(0.38, 0.25)
@@ -92,6 +95,28 @@ local function showResult(payload: MatchResultPayload)
 	TweenService:Create(panel, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 		Size = UDim2.fromScale(0.42, 0.28),
 	}):Play()
+end
+
+local function showResult(payload: MatchResultPayload)
+	if matchEndedShown then
+		return
+	end
+	showPanel(
+		"LOOT SECURED",
+		Format.gold(payload.SecuredValue),
+		string.format("%d item(s) extracted — waiting on team", payload.ItemCount),
+		Tokens.AccentGold
+	)
+end
+
+local function showMatchEnded(payload: MatchEndedPayload)
+	matchEndedShown = true
+	local title = if payload.Outcome == "TeamWipe" then "TEAM WIPED" else "MATCH COMPLETE"
+	local accent = if payload.Outcome == "TeamWipe" then Tokens.Danger else Tokens.AccentGold
+	local sub = if payload.Extracted
+		then string.format("You escaped with %d item(s)", payload.ItemCount)
+		else "You did not extract"
+	showPanel(title, Format.gold(payload.SecuredValue), sub, accent)
 end
 
 function ResultController.start()
@@ -103,6 +128,16 @@ function ResultController.start()
 			return
 		end
 		showResult(payload :: MatchResultPayload)
+	end)
+
+	RemotesClient.matchEnded().OnClientEvent:Connect(function(payload: any)
+		if typeof(payload) ~= "table" then
+			return
+		end
+		if typeof(payload.Outcome) ~= "string" then
+			return
+		end
+		showMatchEnded(payload :: MatchEndedPayload)
 	end)
 end
 

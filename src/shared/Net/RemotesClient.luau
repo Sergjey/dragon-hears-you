@@ -45,4 +45,16 @@ function RemotesClient.dragonEvent(): RemoteEvent
 	return RemotesClient.getEvent(RemoteNames.DragonEvent)
 end
 
+function RemotesClient.requestRevive(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.RequestRevive)
+end
+
+function RemotesClient.rosterState(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.RosterState)
+end
+
+function RemotesClient.matchEnded(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.MatchEnded)
+end
+
 return RemotesClient

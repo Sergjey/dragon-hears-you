@@ -4,12 +4,16 @@ local TweenService = game:GetService("TweenService")
 
 local Format = require(ReplicatedStorage.Shared.Utils.Format)
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
+local MultiplayerConfig = require(ReplicatedStorage.Shared.Config.MultiplayerConfig)
 local RemotesClient = require(ReplicatedStorage.Shared.Net.RemotesClient)
 local MatchTypes = require(ReplicatedStorage.Shared.Types.MatchTypes)
+local MultiplayerTypes = require(ReplicatedStorage.Shared.Types.MultiplayerTypes)
 local Tokens = require(script.Parent.Parent.UI.Tokens)
 
 type MatchStatePayload = MatchTypes.MatchStatePayload
 type ExtractionStatePayload = MatchTypes.ExtractionStatePayload
+type RosterStatePayload = MultiplayerTypes.RosterStatePayload
+type RosterEntry = MultiplayerTypes.RosterEntry
 
 local HUDController = {}
 
@@ -26,6 +30,8 @@ local extractFill: Frame
 local extractLabel: TextLabel
 local hpLabel: TextLabel
 local hpFill: Frame
+local rosterFrame: Frame
+local rosterRows: { Frame } = {}
 
 local function noiseColor(noise: number, maxNoise: number): Color3
 	local t = GameConfig.StageThresholds
@@ -277,6 +283,154 @@ local function ensureGui()
 	local exFillCorner = Instance.new("UICorner")
 	exFillCorner.CornerRadius = UDim.new(0, 6)
 	exFillCorner.Parent = extractFill
+
+	-- Team roster (right side)
+	rosterFrame = Instance.new("Frame")
+	rosterFrame.Name = "TeamRoster"
+	rosterFrame.AnchorPoint = Vector2.new(1, 0)
+	rosterFrame.Position = UDim2.fromScale(0.97, 0.14)
+	rosterFrame.Size = UDim2.fromScale(0.2, 0.36)
+	rosterFrame.BackgroundTransparency = 1
+	rosterFrame.Parent = gui
+
+	local rosterLayout = Instance.new("UIListLayout")
+	rosterLayout.FillDirection = Enum.FillDirection.Vertical
+	rosterLayout.Padding = UDim.new(0.03, 0)
+	rosterLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	rosterLayout.Parent = rosterFrame
+
+	table.clear(rosterRows)
+	for i = 1, 4 do
+		local row = Instance.new("Frame")
+		row.Name = "Slot" .. i
+		row.Size = UDim2.fromScale(1, 0.22)
+		row.BackgroundColor3 = Tokens.Panel
+		row.BackgroundTransparency = 0.12
+		row.BorderSizePixel = 0
+		row.Visible = false
+		row.LayoutOrder = i
+		row.Parent = rosterFrame
+
+		local rowCorner = Instance.new("UICorner")
+		rowCorner.CornerRadius = UDim.new(0, 8)
+		rowCorner.Parent = row
+
+		local rowStroke = Instance.new("UIStroke")
+		rowStroke.Name = "Stroke"
+		rowStroke.Color = Tokens.Accent
+		rowStroke.Transparency = 0.55
+		rowStroke.Parent = row
+
+		local nameLabel = Instance.new("TextLabel")
+		nameLabel.Name = "Name"
+		nameLabel.BackgroundTransparency = 1
+		nameLabel.Position = UDim2.fromScale(0.06, 0.08)
+		nameLabel.Size = UDim2.fromScale(0.58, 0.42)
+		nameLabel.Font = Enum.Font.GothamBold
+		nameLabel.TextSize = 13
+		nameLabel.TextColor3 = Tokens.TextPrimary
+		nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+		nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
+		nameLabel.Text = ""
+		nameLabel.Parent = row
+
+		local statusLabel = Instance.new("TextLabel")
+		statusLabel.Name = "Status"
+		statusLabel.BackgroundTransparency = 1
+		statusLabel.AnchorPoint = Vector2.new(1, 0)
+		statusLabel.Position = UDim2.fromScale(0.94, 0.08)
+		statusLabel.Size = UDim2.fromScale(0.34, 0.42)
+		statusLabel.Font = Enum.Font.GothamMedium
+		statusLabel.TextSize = 11
+		statusLabel.TextColor3 = Tokens.AccentGold
+		statusLabel.TextXAlignment = Enum.TextXAlignment.Right
+		statusLabel.Text = ""
+		statusLabel.Parent = row
+
+		local barTrack = Instance.new("Frame")
+		barTrack.Name = "Track"
+		barTrack.Position = UDim2.fromScale(0.06, 0.62)
+		barTrack.Size = UDim2.fromScale(0.88, 0.24)
+		barTrack.BackgroundColor3 = Tokens.BgDeep
+		barTrack.BorderSizePixel = 0
+		barTrack.Parent = row
+
+		local barCorner = Instance.new("UICorner")
+		barCorner.CornerRadius = UDim.new(0, 4)
+		barCorner.Parent = barTrack
+
+		local barFill = Instance.new("Frame")
+		barFill.Name = "Fill"
+		barFill.Size = UDim2.fromScale(1, 1)
+		barFill.BackgroundColor3 = Tokens.Safe
+		barFill.BorderSizePixel = 0
+		barFill.Parent = barTrack
+
+		local barFillCorner = Instance.new("UICorner")
+		barFillCorner.CornerRadius = UDim.new(0, 4)
+		barFillCorner.Parent = barFill
+
+		table.insert(rosterRows, row)
+	end
+end
+
+local function statusStyle(entry: RosterEntry): (string, Color3, Color3)
+	if entry.Status == "Downed" then
+		local secs = if entry.BleedoutRemaining then math.ceil(entry.BleedoutRemaining) else 0
+		return string.format("DOWN %ds", secs), Tokens.Danger, Tokens.Danger
+	elseif entry.Status == "Dead" then
+		return "OUT", Tokens.TextMuted, Tokens.TextMuted
+	elseif entry.Status == "Extracted" then
+		return "EXTRACTED", Tokens.AccentGold, Tokens.AccentGold
+	end
+	return "OK", Tokens.Safe, Tokens.Safe
+end
+
+local function applyRoster(payload: RosterStatePayload)
+	local entries = payload.Entries
+	for i, row in rosterRows do
+		local entry = entries[i]
+		if not entry then
+			row.Visible = false
+			continue
+		end
+		row.Visible = true
+		local nameLabel = row:FindFirstChild("Name") :: TextLabel
+		local statusLabel = row:FindFirstChild("Status") :: TextLabel
+		local track = row:FindFirstChild("Track") :: Frame
+		local fill = track and track:FindFirstChild("Fill") :: Frame
+		local stroke = row:FindFirstChild("Stroke") :: UIStroke
+
+		nameLabel.Text = entry.Name
+		local statusText, statusColor, barColor = statusStyle(entry)
+		statusLabel.Text = statusText
+		statusLabel.TextColor3 = statusColor
+		if stroke then
+			stroke.Color = statusColor
+		end
+
+		local ratio = 0
+		if entry.MaxHP > 0 then
+			ratio = math.clamp(entry.HP / entry.MaxHP, 0, 1)
+		end
+		if entry.Status == "Downed" then
+			ratio = if entry.BleedoutRemaining
+				then math.clamp(entry.BleedoutRemaining / MultiplayerConfig.BleedoutSeconds, 0, 1)
+				else 0
+		elseif entry.Status == "Dead" or entry.Status == "Extracted" then
+			ratio = 0
+		end
+		if fill then
+			fill.Size = UDim2.fromScale(ratio, 1)
+			fill.BackgroundColor3 = barColor
+		end
+
+		if entry.UserId == player.UserId then
+			nameLabel.TextColor3 = Tokens.AccentGold
+		else
+			nameLabel.TextColor3 = Tokens.TextPrimary
+		end
+	end
 end
 
 local function applyMatchState(payload: MatchStatePayload)
@@ -347,6 +501,13 @@ function HUDController.start()
 			return
 		end
 		applyExtraction(payload :: ExtractionStatePayload)
+	end)
+
+	RemotesClient.rosterState().OnClientEvent:Connect(function(payload: any)
+		if typeof(payload) ~= "table" or typeof(payload.Entries) ~= "table" then
+			return
+		end
+		applyRoster(payload :: RosterStatePayload)
 	end)
 
 	player:GetAttributeChangedSignal("HP"):Connect(applyHP)
