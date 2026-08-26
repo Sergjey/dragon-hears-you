@@ -2,6 +2,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local DragonConfig = require(ReplicatedStorage.Shared.Config.DragonConfig)
+local ClassConfig = require(ReplicatedStorage.Shared.Config.ClassConfig)
 
 local BackpackService = require(script.Parent.BackpackService)
 local DownedService = require(script.Parent.DownedService)
@@ -20,6 +21,7 @@ local started = false
 
 -- Optional gate from MatchService: only Alive can take damage
 local canTakeDamage: ((Player) -> boolean)? = nil
+local absorbDamage: ((Player, number) -> number)? = nil
 
 local function getRoot(player: Player): BasePart?
 	local character = player.Character
@@ -33,9 +35,21 @@ local function getRoot(player: Player): BasePart?
 	return nil
 end
 
+function DamageService.getMaxHP(player: Player): number
+	local mul = ClassConfig.get(player:GetAttribute("ClassId") :: any).MaxHPMultiplier
+	return math.floor(DragonConfig.MaxPlayerHP * mul)
+end
+
 local function syncAttributes(player: Player)
-	local maxHp = DragonConfig.MaxPlayerHP
-	local current = hp[player] or maxHp
+	local maxHp = DamageService.getMaxHP(player)
+	local current = hp[player]
+	if current == nil then
+		current = maxHp
+		hp[player] = current
+	else
+		current = math.clamp(current, 0, maxHp)
+		hp[player] = current
+	end
 	player:SetAttribute(HP_ATTR, current)
 	player:SetAttribute(MAX_HP_ATTR, maxHp)
 end
@@ -44,12 +58,17 @@ function DamageService.bindCanTakeDamage(fn: (Player) -> boolean)
 	canTakeDamage = fn
 end
 
+function DamageService.bindAbsorb(fn: (Player, number) -> number)
+	absorbDamage = fn
+end
+
 function DamageService.getHP(player: Player): number
-	return hp[player] or DragonConfig.MaxPlayerHP
+	return hp[player] or DamageService.getMaxHP(player)
 end
 
 function DamageService.setHP(player: Player, value: number)
-	hp[player] = math.clamp(value, 0, DragonConfig.MaxPlayerHP)
+	local maxHp = DamageService.getMaxHP(player)
+	hp[player] = math.clamp(value, 0, maxHp)
 	syncAttributes(player)
 end
 
@@ -67,7 +86,7 @@ function DamageService.isDownedOrDead(player: Player): boolean
 end
 
 function DamageService.resetPlayer(player: Player)
-	hp[player] = DragonConfig.MaxPlayerHP
+	hp[player] = DamageService.getMaxHP(player)
 	syncAttributes(player)
 end
 
@@ -111,8 +130,21 @@ function DamageService.applyDamage(player: Player, amount: number, _source: stri
 	end
 
 	ExtractionService.cancelOnDamage(player)
-	local current = hp[player] or DragonConfig.MaxPlayerHP
-	current = math.max(0, current - amount)
+
+	-- Guardian Shield: attribute is source of truth
+	local charges = player:GetAttribute("ShieldCharges")
+	if typeof(charges) == "number" and charges > 0 then
+		player:SetAttribute("ShieldCharges", (charges :: number) - 1)
+		if absorbDamage then
+			absorbDamage(player, amount)
+		end
+		return
+	end
+
+	local incoming = amount
+	local maxHp = DamageService.getMaxHP(player)
+	local current = hp[player] or maxHp
+	current = math.max(0, current - incoming)
 	hp[player] = current
 	syncAttributes(player)
 

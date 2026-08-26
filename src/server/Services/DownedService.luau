@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local DragonConfig = require(ReplicatedStorage.Shared.Config.DragonConfig)
+local ClassConfig = require(ReplicatedStorage.Shared.Config.ClassConfig)
 local MultiplayerConfig = require(ReplicatedStorage.Shared.Config.MultiplayerConfig)
 local Remotes = require(script.Parent.Parent.Net.Remotes)
 
@@ -114,6 +115,11 @@ local function attachRevivePrompt(player: Player, session: DownedSession)
 	prompt.Parent = root
 	session.Prompt = prompt
 
+	prompt.PromptButtonHoldBegan:Connect(function(reviver: Player)
+		local mul = ClassConfig.get(reviver:GetAttribute("ClassId") :: any).ReviveSpeedMultiplier
+		prompt.HoldDuration = MultiplayerConfig.ReviveHoldSeconds / math.max(mul, 0.1)
+	end)
+
 	prompt.Triggered:Connect(function(reviver: Player)
 		DownedService.tryRevive(reviver, player)
 	end)
@@ -176,7 +182,7 @@ function DownedService.tryRevive(reviver: Player, target: Player): boolean
 	clearPrompt(session)
 	sessions[target] = nil
 
-	local heal = math.floor(DragonConfig.MaxPlayerHP * MultiplayerConfig.ReviveHealthFraction)
+	local heal = math.floor(DragonConfig.MaxPlayerHP * ClassConfig.get(target:GetAttribute("ClassId") :: any).MaxHPMultiplier * MultiplayerConfig.ReviveHealthFraction)
 	if setHP then
 		setHP(target, heal)
 	end

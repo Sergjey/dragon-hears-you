@@ -10,28 +10,30 @@ Roblox experience developed with **Rojo** + **Cursor** + **official Studio MCP**
 ## Game
 - Working title: **Gorynych Heist** (repo: dragon-hears-you)
 - Elevator pitch: Team of thieves steals treasure from sleeping three-headed Zmey Gorynych — greed raises shared Noise and wakes the dragon.
-- Core loop: Lobby → loadout → dungeon → loot / noise risk → extract → sell → upgrades
-- Current phase: **Phase 4 lobby** (Solo/Duo/Squad pads, countdown, Studio in-place match start; TeleportService when PlaceIds set)
-- Done: Phase 1 vertical slice; Phase 2 dragon AI; Phase 3 multiplayer (Downed/Revive, roster, match-end)
-- Next: Phase 5+ (loadout/classes deferred); set `LobbyConfig` PlaceIds for published multi-place
-- Out of scope still: classes, CarryService runtime, DataStore economy, monetization
+- Core loop: Lobby → class select → pad → dungeon → loot / noise risk → extract → sell → upgrades
+- Current phase: **Phase 5 classes** (Thief / Medic / Guardian / Trickster; Scout deferred)
+- Done: Phase 1–4 (slice, dragon AI, multiplayer Downed/Revive, lobby pads)
+- Next: Phase 6 economy (sell gold, DataStore, bags, gadgets); Scout after class gameplay check
+- Out of scope still: Scout, CarryService runtime, monetization, Phase 7 art polish
+
+## Classes (Phase 5)
+- Lobby UI selects class → `ClassId` attribute (locked for the run on pad start)
+- Passives: Thief stealth/speed/loot; Medic revive speed; Guardian +30% HP
+- Actives (Q): Silent Step / Heal / Shield / Noise Maker — server-validated CDs
+- Config: `src/shared/Config/ClassConfig.luau`
 
 ## Lobby / teleport
-- Studio default: `LobbyPlaceId` / `DungeonPlaceId` = `0` → **in-place** pad → dungeon (no TeleportService)
-- Published: set PlaceIds in `src/shared/Config/LobbyConfig.luau` → `ReserveServer` + private teleport; match end returns to lobby PlaceId
-- Pads: CollectionService `TeleportPad` + attributes `PadId`, `PartySize` (1/2/4)
+- Studio default: PlaceIds `0` → in-place pad → dungeon
+- Published: set PlaceIds in `LobbyConfig.luau`
 
 ## Visual (graybox)
-- **Intentional temporary graybox**: procedural lobby pads + `DungeonBootstrap` + placeholder dragon. Not final art.
-- Gameplay binds to **CollectionService tags** (`Loot`, `Dragon`, `ExtractionZone`, `HideSpot`, `TeleportPad`) so models can replace parts later.
-- Full art / sound / animation polish = **Phase 7**.
+- Intentional temporary graybox; gameplay on CollectionService tags.
 
 ## Architecture
-- Shared config: `src/shared/Config/{Game,Noise,Loot,Dragon,Multiplayer,Lobby,Tags}`
-- Server: Lobby, MatchTeleport, Match, Noise, Loot, Backpack, MovementModifier, Extraction, Damage, Downed, Dragon, DragonPerception
-- Client: Lobby / HUD / Result / Interaction / DragonEffects / Downed
-- Remotes: LobbyPadState + match remotes (MatchState, RosterState, MatchEnded, …)
-- Map: `LobbyBootstrap` + procedural `DungeonBootstrap`
+- Shared config: Game, Noise, Loot, Dragon, Multiplayer, Lobby, Class, Tags
+- Server: Class, Lobby, MatchTeleport, Match, Noise, Loot, Backpack, Movement, Extraction, Damage, Downed, Dragon…
+- Client: Lobby / ClassSelect / HUD / Result / Interaction / DragonEffects / Downed
+- Remotes: RequestSetClass, ClassState, RequestUseAbility, AbilityFx + prior remotes
 
 ## Agent shortcuts
 - Project rules: `.cursor/rules/`

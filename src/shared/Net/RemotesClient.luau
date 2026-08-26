@@ -61,4 +61,20 @@ function RemotesClient.lobbyPadState(): RemoteEvent
 	return RemotesClient.getEvent(RemoteNames.LobbyPadState)
 end
 
+function RemotesClient.requestSetClass(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.RequestSetClass)
+end
+
+function RemotesClient.classState(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.ClassState)
+end
+
+function RemotesClient.requestUseAbility(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.RequestUseAbility)
+end
+
+function RemotesClient.abilityFx(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.AbilityFx)
+end
+
 return RemotesClient

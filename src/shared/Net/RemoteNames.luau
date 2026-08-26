@@ -9,6 +9,10 @@ local RemoteNames = {
 	RosterState = "RosterState",
 	MatchEnded = "MatchEnded",
 	LobbyPadState = "LobbyPadState",
+	RequestSetClass = "RequestSetClass",
+	ClassState = "ClassState",
+	RequestUseAbility = "RequestUseAbility",
+	AbilityFx = "AbilityFx",
 }
 
 return RemoteNames
