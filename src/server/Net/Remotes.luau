@@ -59,6 +59,10 @@ function Remotes.init()
 	ensure(RemoteNames.EconomyState)
 	ensure(RemoteNames.GadgetFx)
 	ensure(RemoteNames.LootFx)
+	ensure(RemoteNames.RequestSetDifficulty)
+	ensure(RemoteNames.RequestSetDailyOptIn)
+	ensure(RemoteNames.ReplayState)
+	ensure(RemoteNames.MatchEvent)
 end
 
 function Remotes.get(name: string): RemoteEvent
@@ -163,6 +167,22 @@ end
 
 function Remotes.lootFx(): RemoteEvent
 	return Remotes.get(RemoteNames.LootFx)
+end
+
+function Remotes.requestSetDifficulty(): RemoteEvent
+	return Remotes.get(RemoteNames.RequestSetDifficulty)
+end
+
+function Remotes.requestSetDailyOptIn(): RemoteEvent
+	return Remotes.get(RemoteNames.RequestSetDailyOptIn)
+end
+
+function Remotes.replayState(): RemoteEvent
+	return Remotes.get(RemoteNames.ReplayState)
+end
+
+function Remotes.matchEvent(): RemoteEvent
+	return Remotes.get(RemoteNames.MatchEvent)
 end
 
 return Remotes

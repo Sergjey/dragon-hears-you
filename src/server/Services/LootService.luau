@@ -9,6 +9,7 @@ local Tags = require(ReplicatedStorage.Shared.Config.Tags)
 local BackpackService = require(script.Parent.BackpackService)
 local NoiseService = require(script.Parent.NoiseService)
 local Remotes = require(script.Parent.Parent.Net.Remotes)
+local ReplayService = require(script.Parent.ReplayService)
 
 local LootService = {}
 
@@ -86,11 +87,12 @@ local function tryPickup(player: Player, lootInstance: Instance)
 	local def = LootConfig.get(lootId)
 	if def then
 		NoiseService.add(def.PickupNoise, "LootPickup", lootPart.Position)
+		local value = math.floor(def.Value * ReplayService.getLootValueMultiplier() + 0.5)
 		Remotes.lootFx():FireClient(player, {
 			UserId = player.UserId,
 			LootId = def.Id,
 			Rarity = def.Rarity,
-			Value = def.Value,
+			Value = value,
 			Position = lootPart.Position,
 		})
 	end

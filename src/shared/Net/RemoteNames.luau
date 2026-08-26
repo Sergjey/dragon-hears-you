@@ -19,6 +19,10 @@ local RemoteNames = {
 	EconomyState = "EconomyState",
 	GadgetFx = "GadgetFx",
 	LootFx = "LootFx",
+	RequestSetDifficulty = "RequestSetDifficulty",
+	RequestSetDailyOptIn = "RequestSetDailyOptIn",
+	ReplayState = "ReplayState",
+	MatchEvent = "MatchEvent",
 }
 
 return RemoteNames

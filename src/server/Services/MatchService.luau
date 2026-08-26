@@ -13,12 +13,14 @@ local DamageService = require(script.Parent.DamageService)
 local DownedService = require(script.Parent.DownedService)
 local DragonService = require(script.Parent.DragonService)
 local EconomyService = require(script.Parent.EconomyService)
+local EventService = require(script.Parent.EventService)
 local ExtractionService = require(script.Parent.ExtractionService)
 local GadgetService = require(script.Parent.GadgetService)
 local LootService = require(script.Parent.LootService)
 local MatchTeleport = require(script.Parent.MatchTeleport)
 local MovementModifierService = require(script.Parent.MovementModifierService)
 local NoiseService = require(script.Parent.NoiseService)
+local ReplayService = require(script.Parent.ReplayService)
 
 type PlayerMatchStatus = MultiplayerTypes.PlayerMatchStatus
 type RosterEntry = MultiplayerTypes.RosterEntry
@@ -382,6 +384,9 @@ local function installStudioDebug()
 end
 
 function MatchService.teardownMatch()
+	EventService.stop()
+	ReplayService.endMatch()
+	NoiseService.setAmountMultiplier(1)
 	for _, player in Players:GetPlayers() do
 		DownedService.clear(player)
 		ClassService.unlockAfterMatch(player)
@@ -426,12 +431,15 @@ function MatchService.beginFromLobby(players: { Player }, partySize: number)
 	matchEnded = false
 	outcome = "Ongoing"
 
-	DungeonBootstrap.build()
+	local seed, multipliers = ReplayService.beginMatch(players)
+	NoiseService.setAmountMultiplier(multipliers.NoiseMultiplier)
+	DungeonBootstrap.build(seed, multipliers)
 	ExtractionService.refreshZones()
 	LootService.init()
 	DragonService.init()
 	DragonService.reset()
 	NoiseService.startMatch()
+	EventService.start(seed)
 
 	for _, player in players do
 		EconomyService.applyLoadout(player)
@@ -441,7 +449,7 @@ function MatchService.beginFromLobby(players: { Player }, partySize: number)
 		teleportToSpawn(player)
 	end
 	broadcastRoster()
-	print(`[Gorynych] Match started for party of {#players} (cap {partySize})`)
+	print(`[Gorynych] Match started for party of {#players} (cap {partySize}) seed={seed}`)
 end
 
 function MatchService.beginFromTeleportJoin()
@@ -490,6 +498,8 @@ function MatchService.prepare()
 	EconomyService.init()
 	ClassService.init()
 	GadgetService.init()
+	ReplayService.init()
+	EventService.init()
 	bindDropRemote()
 
 	DamageService.bindCanTakeDamage(function(player)
