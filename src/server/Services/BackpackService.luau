@@ -2,6 +2,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
+local EconomyConfig = require(ReplicatedStorage.Shared.Config.EconomyConfig)
 local LootConfig = require(ReplicatedStorage.Shared.Config.LootConfig)
 local LootTypes = require(ReplicatedStorage.Shared.Types.LootTypes)
 
@@ -54,6 +55,17 @@ end
 
 function BackpackService.get(player: Player): BackpackState
 	return BackpackService.ensure(player)
+end
+
+function BackpackService.setCapacity(player: Player, capacity: number)
+	local state = BackpackService.ensure(player)
+	state.Capacity = math.max(1, math.floor(capacity))
+	BackpackService.notify(player)
+end
+
+function BackpackService.applyBagId(player: Player, bagId: string)
+	local def = EconomyConfig.getBag(bagId)
+	BackpackService.setCapacity(player, def.Capacity)
 end
 
 function BackpackService.getFillRatio(player: Player): number

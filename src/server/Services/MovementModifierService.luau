@@ -4,9 +4,11 @@ local RunService = game:GetService("RunService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local ClassConfig = require(ReplicatedStorage.Shared.Config.ClassConfig)
+local EconomyConfig = require(ReplicatedStorage.Shared.Config.EconomyConfig)
 local NoiseConfig = require(ReplicatedStorage.Shared.Config.NoiseConfig)
 
 local BackpackService = require(script.Parent.BackpackService)
+local EconomyService = require(script.Parent.EconomyService)
 local NoiseService = require(script.Parent.NoiseService)
 
 local MovementModifierService = {}
@@ -93,7 +95,24 @@ end
 function MovementModifierService.getFootstepMultiplier(player: Player): number
 	local bagMul = getTier(BackpackService.getFillRatio(player)).FootstepNoiseMultiplier
 	local classMul = ClassConfig.get(player:GetAttribute("ClassId") :: any).FootstepNoiseMultiplier
-	return bagMul * classMul
+	local bagDef = EconomyConfig.getBag(EconomyService.getEquippedBagId(player))
+	local bagTypeMul = bagDef.FootstepNoiseMultiplier
+
+	local gadgetMul = 1
+	local equipped = EconomyService.getEquippedGadgetId(player)
+	local gadget = EconomyConfig.getGadget(equipped)
+	if gadget and gadget.FootstepNoiseMultiplier then
+		gadgetMul = gadget.FootstepNoiseMultiplier
+	end
+
+	local smokeUntil = player:GetAttribute("SmokeBombUntil")
+	local smokeMul = 1
+	if typeof(smokeUntil) == "number" and (smokeUntil :: number) > os.clock() then
+		local smokeDef = EconomyConfig.getGadget("SmokeBomb")
+		smokeMul = (smokeDef and smokeDef.SmokeFootstepMultiplier) or 0.15
+	end
+
+	return bagMul * classMul * bagTypeMul * gadgetMul * smokeMul
 end
 
 local function isSilentStep(player: Player): boolean

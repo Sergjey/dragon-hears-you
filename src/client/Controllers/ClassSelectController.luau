@@ -3,6 +3,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 
 local ClassConfig = require(ReplicatedStorage.Shared.Config.ClassConfig)
+local EconomyConfig = require(ReplicatedStorage.Shared.Config.EconomyConfig)
+local Format = require(ReplicatedStorage.Shared.Utils.Format)
 local RemotesClient = require(ReplicatedStorage.Shared.Net.RemotesClient)
 local ClassTypes = require(ReplicatedStorage.Shared.Types.ClassTypes)
 local Tokens = require(script.Parent.Parent.UI.Tokens)
@@ -17,6 +19,43 @@ local abilityGui: ScreenGui?
 local abilityLabel: TextLabel?
 local cdLabel: TextLabel?
 local classList: Frame?
+local unlockedClasses: { string } = { "Thief" }
+
+local function listHas(list: { string }, id: string): boolean
+	for _, v in list do
+		if v == id then
+			return true
+		end
+	end
+	return false
+end
+
+local function refreshClassLabels()
+	if not classList then
+		return
+	end
+	for _, child in classList:GetChildren() do
+		if child:IsA("TextButton") then
+			local def = ClassConfig.get(child.Name)
+			local price = EconomyConfig.getClassPrice(def.Id) or 0
+			local unlocked = listHas(unlockedClasses, def.Id) or price <= 0
+			local desc = child:FindFirstChildWhichIsA("TextLabel")
+			if unlocked then
+				child.Text = def.DisplayName
+				child.TextColor3 = Tokens.TextPrimary
+				if desc then
+					desc.Text = def.Description
+				end
+			else
+				child.Text = def.DisplayName .. " [LOCK]"
+				child.TextColor3 = Tokens.TextMuted
+				if desc then
+					desc.Text = "Unlock " .. Format.gold(price) .. " · " .. def.Description
+				end
+			end
+		end
+	end
+end
 
 local function highlightClass(classId: string)
 	if not classList then
@@ -113,12 +152,19 @@ local function ensureSelectGui()
 		desc.Parent = btn
 
 		btn.MouseButton1Click:Connect(function()
-			RemotesClient.requestSetClass():FireServer(def.Id)
+			local price = EconomyConfig.getClassPrice(def.Id) or 0
+			local unlocked = listHas(unlockedClasses, def.Id) or price <= 0
+			if unlocked then
+				RemotesClient.requestSetClass():FireServer(def.Id)
+			else
+				RemotesClient.requestBuy():FireServer("Class", def.Id)
+			end
 		end)
 	end
 
 	local current = player:GetAttribute("ClassId")
 	highlightClass(if typeof(current) == "string" then current :: string else ClassConfig.DefaultClassId)
+	refreshClassLabels()
 end
 
 local function ensureAbilityGui()
@@ -222,6 +268,14 @@ function ClassSelectController.start()
 			return
 		end
 		applyClassState(payload :: ClassStatePayload)
+	end)
+
+	RemotesClient.economyState().OnClientEvent:Connect(function(payload: any)
+		if typeof(payload) ~= "table" or typeof(payload.UnlockedClasses) ~= "table" then
+			return
+		end
+		unlockedClasses = payload.UnlockedClasses
+		refreshClassLabels()
 	end)
 
 	player:GetAttributeChangedSignal("GamePhase"):Connect(refreshVisibility)

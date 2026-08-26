@@ -28,6 +28,19 @@ local stageLabel: TextLabel
 local extractFrame: Frame
 local extractFill: Frame
 local extractLabel: TextLabel
+local walletGold = 0
+local runBagValue = 0
+
+local function refreshGoldLabel()
+	if not goldLabel then
+		return
+	end
+	if player:GetAttribute("GamePhase") == "Match" then
+		goldLabel.Text = "RUN " .. Format.gold(runBagValue)
+	else
+		goldLabel.Text = Format.gold(walletGold)
+	end
+end
 local hpLabel: TextLabel
 local hpFill: Frame
 local rosterFrame: Frame
@@ -451,7 +464,8 @@ local function applyMatchState(payload: MatchStatePayload)
 	end
 	stageLabel.Text = "NOISE — " .. stageText
 	bagLabel.Text = string.format("BAG %d / %d", payload.BagUsed, payload.BagCapacity)
-	goldLabel.Text = Format.gold(payload.BagValue)
+	runBagValue = payload.BagValue
+	refreshGoldLabel()
 end
 
 local function applyHP()
@@ -494,6 +508,23 @@ function HUDController.start()
 			return
 		end
 		applyMatchState(payload :: MatchStatePayload)
+	end)
+
+	RemotesClient.economyState().OnClientEvent:Connect(function(payload: any)
+		if typeof(payload) ~= "table" or typeof(payload.Gold) ~= "number" then
+			return
+		end
+		walletGold = payload.Gold
+		refreshGoldLabel()
+	end)
+
+	player:GetAttributeChangedSignal("GamePhase"):Connect(refreshGoldLabel)
+	player:GetAttributeChangedSignal("Gold"):Connect(function()
+		local g = player:GetAttribute("Gold")
+		if typeof(g) == "number" then
+			walletGold = g :: number
+			refreshGoldLabel()
+		end
 	end)
 
 	RemotesClient.extractionState().OnClientEvent:Connect(function(payload: any)

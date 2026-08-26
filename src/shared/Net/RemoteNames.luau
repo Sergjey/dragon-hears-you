@@ -13,6 +13,11 @@ local RemoteNames = {
 	ClassState = "ClassState",
 	RequestUseAbility = "RequestUseAbility",
 	AbilityFx = "AbilityFx",
+	RequestBuy = "RequestBuy",
+	RequestEquipLoadout = "RequestEquipLoadout",
+	RequestUseGadget = "RequestUseGadget",
+	EconomyState = "EconomyState",
+	GadgetFx = "GadgetFx",
 }
 
 return RemoteNames

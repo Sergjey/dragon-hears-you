@@ -12,7 +12,9 @@ local ClassService = require(script.Parent.ClassService)
 local DamageService = require(script.Parent.DamageService)
 local DownedService = require(script.Parent.DownedService)
 local DragonService = require(script.Parent.DragonService)
+local EconomyService = require(script.Parent.EconomyService)
 local ExtractionService = require(script.Parent.ExtractionService)
+local GadgetService = require(script.Parent.GadgetService)
 local LootService = require(script.Parent.LootService)
 local MatchTeleport = require(script.Parent.MatchTeleport)
 local MovementModifierService = require(script.Parent.MovementModifierService)
@@ -176,6 +178,7 @@ function MatchService.setExtracted(player: Player, value: number, itemCount: num
 	setStatus(player, "Extracted")
 	securedValue[player] = value
 	securedItems[player] = itemCount
+	EconomyService.creditExtract(player, value)
 	DownedService.clear(player)
 	broadcastRoster()
 	checkMatchEnd()
@@ -382,6 +385,7 @@ function MatchService.teardownMatch()
 	for _, player in Players:GetPlayers() do
 		DownedService.clear(player)
 		ClassService.unlockAfterMatch(player)
+		GadgetService.unlockAfterMatch(player)
 	end
 	matchRunning = false
 	matchEnded = false
@@ -430,7 +434,9 @@ function MatchService.beginFromLobby(players: { Player }, partySize: number)
 	NoiseService.startMatch()
 
 	for _, player in players do
+		EconomyService.applyLoadout(player)
 		ClassService.lockForMatch(player)
+		GadgetService.lockForMatch(player)
 		hookPartyPlayer(player)
 		teleportToSpawn(player)
 	end
@@ -481,7 +487,9 @@ function MatchService.prepare()
 	ExtractionService.init()
 	DownedService.init()
 	DamageService.init()
+	EconomyService.init()
 	ClassService.init()
+	GadgetService.init()
 	bindDropRemote()
 
 	DamageService.bindCanTakeDamage(function(player)

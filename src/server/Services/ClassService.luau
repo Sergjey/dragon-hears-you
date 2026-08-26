@@ -7,6 +7,7 @@ local ClassTypes = require(ReplicatedStorage.Shared.Types.ClassTypes)
 local Remotes = require(script.Parent.Parent.Net.Remotes)
 
 local DamageService = require(script.Parent.DamageService)
+local EconomyService = require(script.Parent.EconomyService)
 local MovementModifierService = require(script.Parent.MovementModifierService)
 local NoiseService = require(script.Parent.NoiseService)
 
@@ -83,6 +84,9 @@ function ClassService.setClass(player: Player, classId: string): boolean
 		return false
 	end
 	if matchLocked[player] or player:GetAttribute("GamePhase") == "Match" then
+		return false
+	end
+	if not EconomyService.isClassUnlocked(player, classId) then
 		return false
 	end
 	player:SetAttribute(CLASS_ATTR, classId)

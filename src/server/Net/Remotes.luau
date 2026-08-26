@@ -53,6 +53,11 @@ function Remotes.init()
 	ensure(RemoteNames.ClassState)
 	ensure(RemoteNames.RequestUseAbility)
 	ensure(RemoteNames.AbilityFx)
+	ensure(RemoteNames.RequestBuy)
+	ensure(RemoteNames.RequestEquipLoadout)
+	ensure(RemoteNames.RequestUseGadget)
+	ensure(RemoteNames.EconomyState)
+	ensure(RemoteNames.GadgetFx)
 end
 
 function Remotes.get(name: string): RemoteEvent
@@ -133,6 +138,26 @@ end
 
 function Remotes.abilityFx(): RemoteEvent
 	return Remotes.get(RemoteNames.AbilityFx)
+end
+
+function Remotes.requestBuy(): RemoteEvent
+	return Remotes.get(RemoteNames.RequestBuy)
+end
+
+function Remotes.requestEquipLoadout(): RemoteEvent
+	return Remotes.get(RemoteNames.RequestEquipLoadout)
+end
+
+function Remotes.requestUseGadget(): RemoteEvent
+	return Remotes.get(RemoteNames.RequestUseGadget)
+end
+
+function Remotes.economyState(): RemoteEvent
+	return Remotes.get(RemoteNames.EconomyState)
+end
+
+function Remotes.gadgetFx(): RemoteEvent
+	return Remotes.get(RemoteNames.GadgetFx)
 end
 
 return Remotes
