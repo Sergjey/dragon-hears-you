@@ -45,6 +45,9 @@ function Remotes.init()
 	ensure(RemoteNames.MatchResult)
 	ensure(RemoteNames.DragonState)
 	ensure(RemoteNames.DragonEvent)
+	ensure(RemoteNames.RequestRevive)
+	ensure(RemoteNames.RosterState)
+	ensure(RemoteNames.MatchEnded)
 end
 
 function Remotes.get(name: string): RemoteEvent
@@ -93,6 +96,18 @@ end
 
 function Remotes.dragonEvent(): RemoteEvent
 	return Remotes.get(RemoteNames.DragonEvent)
+end
+
+function Remotes.requestRevive(): RemoteEvent
+	return Remotes.get(RemoteNames.RequestRevive)
+end
+
+function Remotes.rosterState(): RemoteEvent
+	return Remotes.get(RemoteNames.RosterState)
+end
+
+function Remotes.matchEnded(): RemoteEvent
+	return Remotes.get(RemoteNames.MatchEnded)
 end
 
 return Remotes

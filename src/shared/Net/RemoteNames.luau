@@ -5,6 +5,9 @@ local RemoteNames = {
 	MatchResult = "MatchResult",
 	DragonState = "DragonState",
 	DragonEvent = "DragonEvent",
+	RequestRevive = "RequestRevive",
+	RosterState = "RosterState",
+	MatchEnded = "MatchEnded",
 }
 
 return RemoteNames

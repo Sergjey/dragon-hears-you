@@ -34,6 +34,11 @@ local function tryPickup(player: Player, lootInstance: Instance)
 		return
 	end
 
+	local matchStatus = player:GetAttribute("MatchStatus")
+	if matchStatus ~= nil and matchStatus ~= "Alive" then
+		return
+	end
+
 	local lootId = lootInstance:GetAttribute("LootId")
 	if typeof(lootId) ~= "string" then
 		return

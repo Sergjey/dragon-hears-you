@@ -11,21 +11,22 @@ Roblox experience developed with **Rojo** + **Cursor** + **official Studio MCP**
 - Working title: **Gorynych Heist** (repo: dragon-hears-you)
 - Elevator pitch: Team of thieves steals treasure from sleeping three-headed Zmey Gorynych — greed raises shared Noise and wakes the dragon.
 - Core loop: Lobby → loadout → dungeon → loot / noise risk → extract → sell → upgrades
-- Current phase: **Phase 2 dragon stages / AI** (state machine, Disturbed events, Partial/Full hunting, HP/death)
-- Done: Phase 1 vertical slice (dungeon, backpack loot, noise, extraction, result UI)
-- Next: Phase 3 multiplayer (shared noise already, downed/revive, team extract edge cases)
-- Out of scope still: lobby pads, classes, CarryService runtime, DataStore economy, monetization
+- Current phase: **Phase 3 multiplayer** (Downed/Revive, team roster HUD, leave drops, match-end when all Dead/Extracted)
+- Done: Phase 1 vertical slice; Phase 2 dragon stages / AI
+- Next: Phase 4 lobby Solo/Duo/Squad pads + TeleportService (do not start until Phase 3 playtest is green)
+- Out of scope still: classes, CarryService runtime, DataStore economy, monetization
+
+## Visual (graybox)
+- **Intentional temporary graybox**: procedural `DungeonBootstrap` parts + placeholder dragon. Not final art.
+- Gameplay binds to **CollectionService tags** (`Loot`, `Dragon`, `ExtractionZone`, `HideSpot`) so Creator Store / custom models can replace parts later without rewriting services.
+- Full art / sound / animation polish = **Phase 7**. Optional short art spike after Phase 3–4 is a separate task.
 
 ## Architecture
-- Shared config: `src/shared/Config/{Game,Noise,Loot,Dragon,Tags}`
-- Server services: Match, Noise, Loot, Backpack, MovementModifier, Extraction, Damage, Dragon, DragonPerception
-- Client: HUD / Result / Interaction / DragonEffects
-- Remotes: MatchState, ExtractionState, MatchResult, RequestDropLoot, DragonState, DragonEvent
+- Shared config: `src/shared/Config/{Game,Noise,Loot,Dragon,Multiplayer,Tags}`
+- Server services: Match, Noise, Loot, Backpack, MovementModifier, Extraction, Damage, Downed, Dragon, DragonPerception
+- Client: HUD (team roster) / Result / Interaction / DragonEffects / Downed
+- Remotes: MatchState, ExtractionState, MatchResult, RequestDropLoot, DragonState, DragonEvent, RequestRevive, RosterState, MatchEnded
 - Map: procedural `DungeonBootstrap` (CollectionService tags)
-
-## Visual
-- Tokens + polish rules: skill `roblox-ui-polish`, rule `roblox-ui`
-- Drop screenshots in `refs/ui`, `refs/mood`, `refs/chars` (see `refs/README.md`)
 
 ## Agent shortcuts
 - Project rules: `.cursor/rules/`

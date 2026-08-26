@@ -4,6 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local DragonConfig = require(ReplicatedStorage.Shared.Config.DragonConfig)
 
 local BackpackService = require(script.Parent.BackpackService)
+local DownedService = require(script.Parent.DownedService)
 local ExtractionService = require(script.Parent.ExtractionService)
 local LootService = require(script.Parent.LootService)
 local MovementModifierService = require(script.Parent.MovementModifierService)
@@ -15,8 +16,10 @@ local HP_ATTR = "HP"
 local MAX_HP_ATTR = "MaxHP"
 
 local hp: { [Player]: number } = {}
-local dead: { [Player]: boolean } = {}
 local started = false
+
+-- Optional gate from MatchService: only Alive can take damage
+local canTakeDamage: ((Player) -> boolean)? = nil
 
 local function getRoot(player: Player): BasePart?
 	local character = player.Character
@@ -37,21 +40,34 @@ local function syncAttributes(player: Player)
 	player:SetAttribute(MAX_HP_ATTR, maxHp)
 end
 
+function DamageService.bindCanTakeDamage(fn: (Player) -> boolean)
+	canTakeDamage = fn
+end
+
 function DamageService.getHP(player: Player): number
 	return hp[player] or DragonConfig.MaxPlayerHP
 end
 
-function DamageService.isDead(player: Player): boolean
-	return dead[player] == true
+function DamageService.setHP(player: Player, value: number)
+	hp[player] = math.clamp(value, 0, DragonConfig.MaxPlayerHP)
+	syncAttributes(player)
+end
+
+function DamageService.syncAttributes(player: Player)
+	syncAttributes(player)
+end
+
+function DamageService.isDownedOrDead(player: Player): boolean
+	local status = player:GetAttribute("MatchStatus")
+	return status == "Downed" or status == "Dead" or DownedService.isDowned(player)
 end
 
 function DamageService.resetPlayer(player: Player)
 	hp[player] = DragonConfig.MaxPlayerHP
-	dead[player] = false
 	syncAttributes(player)
 end
 
-local function dropLootAt(player: Player)
+function DamageService.dropLootAt(player: Player)
 	local root = getRoot(player)
 	local pos = if root then root.Position else Vector3.new(0, 5, 0)
 	local items = BackpackService.dropAll(player)
@@ -65,40 +81,28 @@ local function dropLootAt(player: Player)
 	MovementModifierService.applyForPlayer(player)
 end
 
-local function kill(player: Player, _source: string)
-	if dead[player] then
-		return
+function DamageService.dropLootAtPosition(player: Player, position: Vector3)
+	local items = BackpackService.dropAll(player)
+	for i, item in items do
+		local offset = Vector3.new((i % 3) - 1, 0, math.floor(i / 3))
+		LootService.spawnDroppedLoot(item.Id, position + offset * 2)
 	end
-	dead[player] = true
-	hp[player] = 0
-	syncAttributes(player)
-	ExtractionService.cancelOnDamage(player)
-	dropLootAt(player)
-
-	local character = player.Character
-	if character then
-		local humanoid = character:FindFirstChildOfClass("Humanoid")
-		if humanoid and humanoid.Health > 0 then
-			humanoid.Health = 0
-		end
+	if #items > 0 then
+		NoiseService.add(4, "DeathDrop", position)
 	end
-
-	task.delay(DragonConfig.RespawnDelaySeconds, function()
-		if not player.Parent then
-			return
-		end
-		dead[player] = false
-		hp[player] = DragonConfig.MaxPlayerHP
-		syncAttributes(player)
-		player:LoadCharacter()
-	end)
 end
 
-function DamageService.applyDamage(player: Player, amount: number, source: string)
+function DamageService.applyDamage(player: Player, amount: number, _source: string)
 	if not NoiseService.isMatchActive() then
 		return
 	end
-	if dead[player] or amount <= 0 then
+	if amount <= 0 then
+		return
+	end
+	if DownedService.isDowned(player) then
+		return
+	end
+	if canTakeDamage and not canTakeDamage(player) then
 		return
 	end
 
@@ -109,13 +113,16 @@ function DamageService.applyDamage(player: Player, amount: number, source: strin
 	syncAttributes(player)
 
 	if current <= 0 then
-		kill(player, source)
+		DownedService.enterDowned(player)
 	end
 end
 
 function DamageService.applyAoE(center: Vector3, radius: number, amount: number, source: string)
 	for _, player in Players:GetPlayers() do
-		if dead[player] then
+		if DownedService.isDowned(player) then
+			continue
+		end
+		if canTakeDamage and not canTakeDamage(player) then
 			continue
 		end
 		local root = getRoot(player)
@@ -136,7 +143,10 @@ function DamageService.applyCone(
 	local lookUnit = if look.Magnitude > 0 then look.Unit else Vector3.new(0, 0, -1)
 	local cosLimit = math.cos(math.rad(halfAngleDeg))
 	for _, player in Players:GetPlayers() do
-		if dead[player] then
+		if DownedService.isDowned(player) then
+			continue
+		end
+		if canTakeDamage and not canTakeDamage(player) then
 			continue
 		end
 		local root = getRoot(player)
@@ -160,10 +170,17 @@ function DamageService.init()
 	end
 	started = true
 
+	DownedService.bindDamageHelpers({
+		SetHP = DamageService.setHP,
+		DropLootAt = DamageService.dropLootAt,
+		SyncAttributes = DamageService.syncAttributes,
+	})
+
 	local function hook(player: Player)
 		DamageService.resetPlayer(player)
 		player.CharacterAdded:Connect(function()
-			if not dead[player] then
+			local status = player:GetAttribute("MatchStatus")
+			if status == "Alive" or status == nil then
 				DamageService.resetPlayer(player)
 			end
 			task.defer(function()
@@ -175,7 +192,6 @@ function DamageService.init()
 	Players.PlayerAdded:Connect(hook)
 	Players.PlayerRemoving:Connect(function(player)
 		hp[player] = nil
-		dead[player] = nil
 	end)
 	for _, player in Players:GetPlayers() do
 		hook(player)

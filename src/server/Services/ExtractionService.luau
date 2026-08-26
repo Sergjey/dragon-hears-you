@@ -4,6 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
+local MultiplayerConfig = require(ReplicatedStorage.Shared.Config.MultiplayerConfig)
 local Tags = require(ReplicatedStorage.Shared.Config.Tags)
 local MatchTypes = require(ReplicatedStorage.Shared.Types.MatchTypes)
 local Remotes = require(script.Parent.Parent.Net.Remotes)
@@ -25,6 +26,17 @@ type ExtractSession = {
 local sessions: { [Player]: ExtractSession } = {}
 local zones: { BasePart } = {}
 local started = false
+
+local canExtract: ((Player) -> boolean)? = nil
+local onExtracted: ((Player, number, number) -> ())? = nil
+
+function ExtractionService.bindCanExtract(fn: (Player) -> boolean)
+	canExtract = fn
+end
+
+function ExtractionService.bindOnExtracted(fn: (Player, number, number) -> ())
+	onExtracted = fn
+end
 
 local function fireExtraction(player: Player, payload: ExtractionStatePayload)
 	Remotes.extractionState():FireClient(player, payload)
@@ -52,7 +64,6 @@ local function playerInAnyZone(player: Player): boolean
 		if zone.Parent then
 			local relative = zone.CFrame:PointToObjectSpace(root.Position)
 			local half = zone.Size / 2
-			-- Slight vertical padding so standing on the pad counts
 			if
 				math.abs(relative.X) <= half.X
 				and math.abs(relative.Z) <= half.Z
@@ -88,7 +99,6 @@ function ExtractionService.cancel(player: Player, reason: string?)
 		Cancelled = true,
 		Success = false,
 	})
-	-- reason reserved for future logging / UI
 	local _ = reason
 end
 
@@ -114,6 +124,24 @@ local function complete(player: Player)
 	})
 	fireResult(player, securedValue, itemCount)
 	NoiseService.broadcastMatchState(player)
+
+	if onExtracted then
+		onExtracted(player, securedValue, itemCount)
+	end
+
+	-- Park as spectator until match ends
+	local character = player.Character
+	if character then
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		local root = character:FindFirstChild("HumanoidRootPart")
+		if humanoid then
+			humanoid.WalkSpeed = 0
+			humanoid.JumpPower = 0
+		end
+		if root and root:IsA("BasePart") then
+			root.CFrame = CFrame.new(MultiplayerConfig.SpectatorSpawnOffset)
+		end
+	end
 end
 
 function ExtractionService.init()
@@ -146,6 +174,13 @@ function ExtractionService.init()
 				sessions[player] = session
 			end
 			if session.Completed then
+				continue
+			end
+
+			if canExtract and not canExtract(player) then
+				if session.Active then
+					ExtractionService.cancel(player, "NotEligible")
+				end
 				continue
 			end
 

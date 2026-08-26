@@ -54,6 +54,13 @@ function MovementModifierService.applyForPlayer(player: Player)
 		return
 	end
 
+	local matchStatus = player:GetAttribute("MatchStatus")
+	if matchStatus == "Downed" or matchStatus == "Dead" or matchStatus == "Extracted" then
+		humanoid.WalkSpeed = 0
+		humanoid.JumpPower = 0
+		return
+	end
+
 	local now = os.clock()
 	if freezeUntil[player] and freezeUntil[player] > now then
 		humanoid.WalkSpeed = 0
@@ -68,6 +75,7 @@ function MovementModifierService.applyForPlayer(player: Player)
 		speed *= slow.Multiplier
 	end
 	humanoid.WalkSpeed = speed
+	humanoid.JumpPower = 50
 end
 
 function MovementModifierService.freeze(player: Player, duration: number)
@@ -86,6 +94,11 @@ end
 
 local function samplePlayer(player: Player, dt: number)
 	if not NoiseService.isMatchActive() then
+		return
+	end
+
+	local matchStatus = player:GetAttribute("MatchStatus")
+	if matchStatus == "Downed" or matchStatus == "Dead" or matchStatus == "Extracted" then
 		return
 	end
 
