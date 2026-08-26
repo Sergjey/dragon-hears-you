@@ -11,9 +11,9 @@ Roblox experience developed with **Rojo** + **Cursor** + **official Studio MCP**
 - Working title: **Gorynych Heist** (repo: dragon-hears-you)
 - Elevator pitch: Team of thieves steals treasure from sleeping three-headed Zmey Gorynych — greed raises shared Noise and wakes the dragon.
 - Core loop: Lobby → loadout → dungeon → loot / noise risk → extract → sell → upgrades
-- Current phase: **Phase 3 multiplayer** (Downed/Revive, team roster HUD, leave drops, match-end when all Dead/Extracted)
-- Done: Phase 1 vertical slice; Phase 2 dragon stages / AI
-- Next: Phase 4 lobby Solo/Duo/Squad pads + TeleportService (do not start until Phase 3 playtest is green)
+- Current phase: **Phase 3 Done** (Downed/Revive, team roster, leave drops, match-end) — playtest green for closeout
+- Done: Phase 1 vertical slice; Phase 2 dragon stages / AI; Phase 3 multiplayer
+- Next: **Phase 4** lobby Solo/Duo/Squad pads + TeleportService
 - Out of scope still: classes, CarryService runtime, DataStore economy, monetization
 
 ## Visual (graybox)

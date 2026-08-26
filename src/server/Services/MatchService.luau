@@ -395,6 +395,42 @@ function MatchService.init()
 				MatchActive = NoiseService.isMatchActive(),
 			}
 		end
+
+		local existingBleed = debugFolder:FindFirstChild("ForceBleedout")
+		if existingBleed then
+			existingBleed:Destroy()
+		end
+		local bleedFn = Instance.new("BindableFunction")
+		bleedFn.Name = "ForceBleedout"
+		bleedFn.Parent = debugFolder
+		bleedFn.OnInvoke = function(userId: number)
+			local target = Players:GetPlayerByUserId(userId)
+			if not target then
+				return "NoPlayer"
+			end
+			local ok = DownedService.debugExpireBleedout(target)
+			task.wait(0.15)
+			return {
+				Ok = ok,
+				Status = target:GetAttribute("MatchStatus"),
+				MatchActive = NoiseService.isMatchActive(),
+				Downed = DownedService.isDowned(target),
+			}
+		end
+
+		local existingNoise = debugFolder:FindFirstChild("AddNoise")
+		if existingNoise then
+			existingNoise:Destroy()
+		end
+		local noiseFn = Instance.new("BindableFunction")
+		noiseFn.Name = "AddNoise"
+		noiseFn.Parent = debugFolder
+		noiseFn.OnInvoke = function(amount: number)
+			NoiseService.add(amount, "Debug", Vector3.new(0, 5, 0))
+			return {
+				MatchActive = NoiseService.isMatchActive(),
+			}
+		end
 	end
 
 	print("[Gorynych] Phase 3 match started (Downed/Revive + roster)")

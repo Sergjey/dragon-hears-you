@@ -57,9 +57,13 @@ function DamageService.syncAttributes(player: Player)
 	syncAttributes(player)
 end
 
+function DamageService.isDead(player: Player): boolean
+	return player:GetAttribute("MatchStatus") == "Dead"
+end
+
 function DamageService.isDownedOrDead(player: Player): boolean
 	local status = player:GetAttribute("MatchStatus")
-	return status == "Downed" or status == "Dead" or DownedService.isDowned(player)
+	return status == "Downed" or status == "Dead" or status == "Extracted" or DownedService.isDowned(player)
 end
 
 function DamageService.resetPlayer(player: Player)
