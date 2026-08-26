@@ -1,4 +1,4 @@
-export type ClassId = "Thief" | "Medic" | "Guardian" | "Trickster"
+export type ClassId = "Thief" | "Medic" | "Guardian" | "Trickster" | "Scout"
 
 export type ClassDefinition = {
 	Id: ClassId,
@@ -18,6 +18,8 @@ export type ClassDefinition = {
 	AbilityNoise: number?, -- Trickster noise maker
 	AbilityHealFraction: number?, -- Medic heal add as fraction of max HP
 	AbilityRange: number?,
+	SenseMinRarity: string?, -- Scout Treasure Sense
+	PassiveLootRange: number?, -- Scout passive nearby Rare+
 }
 
 export type ClassStatePayload = {
@@ -27,6 +29,7 @@ export type ClassStatePayload = {
 	CooldownRemaining: number,
 	SilentStepRemaining: number?,
 	ShieldCharges: number?,
+	TreasureSenseRemaining: number?,
 }
 
 export type AbilityFxPayload = {

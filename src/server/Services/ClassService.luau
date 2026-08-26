@@ -19,6 +19,7 @@ local ClassService = {}
 
 local CLASS_ATTR = "ClassId"
 local SILENT_UNTIL_ATTR = "SilentStepUntil"
+local SENSE_UNTIL_ATTR = "TreasureSenseUntil"
 local SHIELD_ATTR = "ShieldCharges"
 
 local started = false
@@ -57,6 +58,11 @@ local function fireClassState(player: Player)
 	if typeof(silentUntil) == "number" then
 		silentLeft = math.max(0, (silentUntil :: number) - now())
 	end
+	local senseLeft = 0
+	local senseUntil = player:GetAttribute(SENSE_UNTIL_ATTR)
+	if typeof(senseUntil) == "number" then
+		senseLeft = math.max(0, (senseUntil :: number) - now())
+	end
 	local shield = player:GetAttribute(SHIELD_ATTR)
 	local payload: ClassStatePayload = {
 		ClassId = def.Id,
@@ -64,6 +70,7 @@ local function fireClassState(player: Player)
 		AbilityName = def.AbilityName,
 		CooldownRemaining = cdLeft,
 		SilentStepRemaining = if silentLeft > 0 then silentLeft else nil,
+		TreasureSenseRemaining = if senseLeft > 0 then senseLeft else nil,
 		ShieldCharges = if typeof(shield) == "number" and shield > 0 then shield :: number else nil,
 	}
 	Remotes.classState():FireClient(player, payload)
@@ -92,6 +99,7 @@ function ClassService.setClass(player: Player, classId: string): boolean
 	player:SetAttribute(CLASS_ATTR, classId)
 	cooldownUntil[player] = nil
 	player:SetAttribute(SILENT_UNTIL_ATTR, nil)
+	player:SetAttribute(SENSE_UNTIL_ATTR, nil)
 	player:SetAttribute(SHIELD_ATTR, 0)
 	fireClassState(player)
 	return true
@@ -111,6 +119,7 @@ function ClassService.unlockAfterMatch(player: Player)
 	matchLocked[player] = nil
 	cooldownUntil[player] = nil
 	player:SetAttribute(SILENT_UNTIL_ATTR, nil)
+	player:SetAttribute(SENSE_UNTIL_ATTR, nil)
 	player:SetAttribute(SHIELD_ATTR, 0)
 	fireClassState(player)
 end
@@ -249,6 +258,18 @@ local function useNoiseMaker(player: Player, def)
 	} :: AbilityFxPayload)
 end
 
+local function useTreasureSense(player: Player, def)
+	local duration = def.AbilityDurationSeconds or 5
+	player:SetAttribute(SENSE_UNTIL_ATTR, now() + duration)
+	startCooldown(player, def.AbilityCooldownSeconds)
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	Remotes.abilityFx():FireAllClients({
+		UserId = player.UserId,
+		AbilityId = def.AbilityId,
+		Position = if root and root:IsA("BasePart") then root.Position else nil,
+	} :: AbilityFxPayload)
+end
+
 function ClassService.tryUseAbility(player: Player): boolean
 	if not canUseAbility(player) then
 		return false
@@ -262,6 +283,8 @@ function ClassService.tryUseAbility(player: Player): boolean
 		useShield(player, def)
 	elseif def.AbilityId == "NoiseMaker" then
 		useNoiseMaker(player, def)
+	elseif def.AbilityId == "TreasureSense" then
+		useTreasureSense(player, def)
 	else
 		return false
 	end

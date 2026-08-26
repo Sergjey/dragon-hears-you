@@ -75,6 +75,7 @@ local classPrices: { [string]: number } = {
 	Medic = 300,
 	Guardian = 300,
 	Trickster = 400,
+	Scout = 500,
 }
 
 local EconomyConfig = {
@@ -84,7 +85,7 @@ local EconomyConfig = {
 	DefaultUnlockedClasses = { "Thief" },
 	BagOrder = { "ClothBag", "ThiefBackpack", "AdventurerPack", "BagOfHolding" } :: { BagId },
 	GadgetOrder = { "FeatherBoots", "SmokeBomb", "DragonBait" } :: { GadgetId },
-	ClassUnlockOrder = { "Thief", "Medic", "Guardian", "Trickster" },
+	ClassUnlockOrder = { "Thief", "Medic", "Guardian", "Trickster", "Scout" },
 }
 
 function EconomyConfig.getBag(id: string?): BagDefinition
