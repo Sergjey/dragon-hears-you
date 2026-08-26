@@ -23,6 +23,9 @@ local RemoteNames = {
 	RequestSetDailyOptIn = "RequestSetDailyOptIn",
 	ReplayState = "ReplayState",
 	MatchEvent = "MatchEvent",
+	RequestCarryInteract = "RequestCarryInteract",
+	RequestDropCarry = "RequestDropCarry",
+	CarryState = "CarryState",
 }
 
 return RemoteNames

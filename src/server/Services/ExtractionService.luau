@@ -10,6 +10,7 @@ local MatchTypes = require(ReplicatedStorage.Shared.Types.MatchTypes)
 local Remotes = require(script.Parent.Parent.Net.Remotes)
 
 local BackpackService = require(script.Parent.BackpackService)
+local CarryService = require(script.Parent.CarryService)
 local NoiseService = require(script.Parent.NoiseService)
 
 type ExtractionStatePayload = MatchTypes.ExtractionStatePayload
@@ -115,6 +116,9 @@ local function complete(player: Player)
 	session.Active = false
 
 	local securedValue, itemCount = BackpackService.clear(player)
+	local carryValue, carryCount = CarryService.trySecureAtExtract(player)
+	securedValue += carryValue
+	itemCount += carryCount
 
 	fireExtraction(player, {
 		Active = false,
@@ -186,6 +190,12 @@ function ExtractionService.init()
 
 			local inside = playerInAnyZone(player)
 			if inside then
+				if not CarryService.canExtractWhileCarrying(player, playerInAnyZone) then
+					if session.Active then
+						ExtractionService.cancel(player, "CarryPartnersRequired")
+					end
+					continue
+				end
 				if not session.Active then
 					session.Active = true
 					session.Elapsed = 0

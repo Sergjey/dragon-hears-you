@@ -48,7 +48,7 @@ local function tryPickup(player: Player, lootInstance: Instance)
 	end
 
 	if not LootConfig.isBackpack(lootId) then
-		-- Carry loot deferred to CarryService (Phase 3+)
+		-- Carry loot handled by CarryService (Tags.CarryLoot)
 		return
 	end
 

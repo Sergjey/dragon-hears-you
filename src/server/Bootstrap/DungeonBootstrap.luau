@@ -72,6 +72,35 @@ local function spawnLoot(parent: Instance, lootId: string, position: Vector3)
 	return loot
 end
 
+local function spawnCarryLoot(parent: Instance, lootId: string, position: Vector3, size: Vector3)
+	local def = LootConfig.get(lootId)
+	local color = (def and FeedbackConfig.rarityColor(def.Rarity)) or Color3.fromRGB(200, 160, 60)
+	local loot = part({
+		Name = lootId,
+		Size = size,
+		CFrame = CFrame.new(position),
+		Color = color,
+		Material = Enum.Material.Neon,
+		Parent = parent,
+	})
+	loot:SetAttribute("LootId", lootId)
+	if def then
+		loot:SetAttribute("Rarity", def.Rarity)
+	end
+
+	local required = (def and def.RequiredPlayers) or 1
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.ActionText = if required > 1 then `Carry (0/{required})` else "Carry"
+	prompt.ObjectText = lootId
+	prompt.HoldDuration = 0.45
+	prompt.MaxActivationDistance = 10
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = loot
+
+	CollectionService:AddTag(loot, Tags.CarryLoot)
+	return loot
+end
+
 local function pickWeightedLoot(rng: SeededRandom.Rng, rarityBias: number): string
 	local weights = ReplayConfig.getLootWeights()
 	local total = 0
@@ -329,6 +358,10 @@ function DungeonBootstrap.build(seed: number?, multipliers: MatchMultipliers?): 
 	if rng:Chance(mul.RareRoomChance) then
 		buildRareRoom(root, lootFolder, rng)
 	end
+
+	-- Fixed carry props for Solo (egg) and Duo+ (chest) playtests
+	spawnCarryLoot(lootFolder, "DragonEgg", Vector3.new(-10, 3.2, 8), Vector3.new(2.2, 2.8, 2.2))
+	spawnCarryLoot(lootFolder, "AncientChest", Vector3.new(12, 2.8, -6), Vector3.new(3.2, 2.4, 2.2))
 
 	return root
 end

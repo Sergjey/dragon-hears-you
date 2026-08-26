@@ -7,6 +7,8 @@ local GameConfig = {
 
 	ExtractionDurationSeconds = 5,
 	LootPickupMaxDistance = 12,
+	CarryMaxCarrierDistance = 28,
+	CarryInteractMaxDistance = 12,
 
 	-- Bag fill % → movement / noise (inclusive upper bounds checked in order)
 	BagFillTiers = {

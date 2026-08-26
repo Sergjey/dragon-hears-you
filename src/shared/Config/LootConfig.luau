@@ -96,4 +96,9 @@ function LootConfig.isBackpack(id: string): boolean
 	return def ~= nil and def.LootType == "Backpack"
 end
 
+function LootConfig.isCarry(id: string): boolean
+	local def = definitions[id]
+	return def ~= nil and def.LootType == "Carry"
+end
+
 return LootConfig

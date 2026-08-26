@@ -63,6 +63,9 @@ function Remotes.init()
 	ensure(RemoteNames.RequestSetDailyOptIn)
 	ensure(RemoteNames.ReplayState)
 	ensure(RemoteNames.MatchEvent)
+	ensure(RemoteNames.RequestCarryInteract)
+	ensure(RemoteNames.RequestDropCarry)
+	ensure(RemoteNames.CarryState)
 end
 
 function Remotes.get(name: string): RemoteEvent
@@ -183,6 +186,18 @@ end
 
 function Remotes.matchEvent(): RemoteEvent
 	return Remotes.get(RemoteNames.MatchEvent)
+end
+
+function Remotes.requestCarryInteract(): RemoteEvent
+	return Remotes.get(RemoteNames.RequestCarryInteract)
+end
+
+function Remotes.requestDropCarry(): RemoteEvent
+	return Remotes.get(RemoteNames.RequestDropCarry)
+end
+
+function Remotes.carryState(): RemoteEvent
+	return Remotes.get(RemoteNames.CarryState)
 end
 
 return Remotes
