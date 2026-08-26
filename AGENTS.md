@@ -11,26 +11,25 @@ Roblox experience developed with **Rojo** + **Cursor** + **official Studio MCP**
 - Working title: **Gorynych Heist** (repo: dragon-hears-you)
 - Elevator pitch: Team of thieves steals treasure from sleeping three-headed Zmey Gorynych — greed raises shared Noise and wakes the dragon.
 - Core loop: Lobby → class select → pad → dungeon → loot / noise risk → extract → sell → upgrades
-- Current phase: **Phase 7 polish** (audio, VFX, loot feedback, dragon warnings, UI motion)
-- Done: Phase 1–6 (slice, dragon AI, multiplayer, lobby, classes, economy)
-- Next: Phase 8 replayability; Scout after class gameplay check
-- Out of scope still: Scout, CarryService runtime, monetization, Creator Store art packs
+- Current phase: **Phase 8 replayability** (seeded loot, events, rare room, Cave I–III, daily card)
+- Done: Phase 1–7 (slice → polish)
+- Next: Scout class; CarryService; Creator Store art packs
+- Out of scope still: Scout, CarryService runtime, monetization
+
+## Replayability (Phase 8)
+- Cave I/II/III + daily challenge opt-in in lobby (`ReplayController`)
+- `MatchSeed` drives loot layout, rare room/SoulGem artifact, mid-match `EventService`
+- Config: `src/shared/Config/ReplayConfig.luau`
 
 ## Polish (Phase 7)
-- `AudioController` + `AudioConfig` — SFX on loot/extract/dragon/abilities; stage tension bus
-- `FeedbackController` — loot rarity popup, AbilityFx/GadgetFx particles, loot bob/spin
-- DragonEffects: stage vignette + telegraph grow; HUD noise stage pulse
-- Config: `src/shared/Config/AudioConfig.luau`, `FeedbackConfig.luau`
+- Audio / Feedback / Dragon vignette / loot bob
+- Config: `AudioConfig`, `FeedbackConfig`
 
 ## Economy (Phase 6)
-- Extract credits persistent **Gold** (server); DataStore profile with `pcall` error handling
-- Lobby shop: bags, class unlocks (Thief free), gadgets (1 slot)
-- Config: `src/shared/Config/EconomyConfig.luau`
+- Extract → Gold; DataStore; bags / class unlocks / gadgets
 
 ## Classes (Phase 5)
-- Lobby UI selects class → `ClassId` (locked on pad start; must be unlocked)
-- Actives (Q): Silent Step / Heal / Shield / Noise Maker
-- Config: `src/shared/Config/ClassConfig.luau`
+- Thief / Medic / Guardian / Trickster (Scout deferred)
 
 ## Lobby / teleport
 - Studio default: PlaceIds `0` → in-place pad → dungeon
@@ -40,10 +39,10 @@ Roblox experience developed with **Rojo** + **Cursor** + **official Studio MCP**
 - Intentional temporary graybox; gameplay on CollectionService tags.
 
 ## Architecture
-- Shared config: Game, Noise, Loot, Dragon, Multiplayer, Lobby, Class, Economy, Audio, Feedback, Tags
-- Server: Data, Economy, Gadget, Class, Lobby, Match, Noise, Loot (+ LootFx), …
-- Client: Lobby / ClassSelect / Shop / HUD / Audio / Feedback / DragonEffects / Result / Downed
-- Remotes: LootFx + prior remotes
+- Shared: Game, Noise, Loot, Dragon, Multiplayer, Lobby, Class, Economy, Audio, Feedback, Replay, Tags
+- Server: Replay, Event, Data, Economy, Gadget, Class, Lobby, Match, Noise, Loot, Dragon…
+- Client: Lobby / Replay / ClassSelect / Shop / HUD / Audio / Feedback / DragonEffects…
+- Remotes: RequestSetDifficulty, RequestSetDailyOptIn, ReplayState, MatchEvent + prior
 
 ## Agent shortcuts
 - Project rules: `.cursor/rules/`

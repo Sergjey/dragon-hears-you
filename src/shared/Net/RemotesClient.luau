@@ -101,4 +101,20 @@ function RemotesClient.lootFx(): RemoteEvent
 	return RemotesClient.getEvent(RemoteNames.LootFx)
 end
 
+function RemotesClient.requestSetDifficulty(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.RequestSetDifficulty)
+end
+
+function RemotesClient.requestSetDailyOptIn(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.RequestSetDailyOptIn)
+end
+
+function RemotesClient.replayState(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.ReplayState)
+end
+
+function RemotesClient.matchEvent(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.MatchEvent)
+end
+
 return RemotesClient

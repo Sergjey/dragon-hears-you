@@ -456,6 +456,10 @@ function DragonService.getAiState(): AiState
 	return aiState
 end
 
+function DragonService.briefStir()
+	fireEvent({ Kind = "Growl", Intensity = 0.4, Duration = 1.1 })
+end
+
 function DragonService.init()
 	if started then
 		resolveDragon()

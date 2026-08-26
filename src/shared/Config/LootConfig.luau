@@ -43,6 +43,14 @@ local definitions: { [string]: LootDefinition } = {
 		Rarity = "Legendary",
 		LootType = "Backpack",
 	},
+	SoulGem = {
+		Id = "SoulGem",
+		Value = 3500,
+		Weight = 3,
+		PickupNoise = 6,
+		Rarity = "Mythic",
+		LootType = "Backpack",
+	},
 	-- Carry examples (not spawned in Phase 1 map; architecture hooks)
 	DragonEgg = {
 		Id = "DragonEgg",

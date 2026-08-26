@@ -20,6 +20,11 @@ local matchActive = false
 local fullAwakeLocked = false
 local heartbeatConn: RBXScriptConnection? = nil
 local noiseListeners: { (amount: number, source: string, position: Vector3?) -> () } = {}
+local amountMultiplier = 1
+
+function NoiseService.setAmountMultiplier(multiplier: number)
+	amountMultiplier = math.max(0, multiplier)
+end
 
 local function stageFromNoise(value: number): DragonStage
 	if fullAwakeLocked then
@@ -93,10 +98,11 @@ function NoiseService.add(amount: number, source: string, position: Vector3?)
 	if not matchActive or amount == 0 then
 		return
 	end
-	noise = clampNoise(noise + amount)
+	local scaled = amount * amountMultiplier
+	noise = clampNoise(noise + scaled)
 	decayAccumulator = 0
 	for _, listener in noiseListeners do
-		listener(amount, source, position)
+		listener(scaled, source, position)
 	end
 	NoiseService.broadcastMatchState()
 end

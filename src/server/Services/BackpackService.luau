@@ -6,6 +6,8 @@ local EconomyConfig = require(ReplicatedStorage.Shared.Config.EconomyConfig)
 local LootConfig = require(ReplicatedStorage.Shared.Config.LootConfig)
 local LootTypes = require(ReplicatedStorage.Shared.Types.LootTypes)
 
+local ReplayService = require(script.Parent.ReplayService)
+
 type BackpackItem = LootTypes.BackpackItem
 type BackpackState = LootTypes.BackpackState
 
@@ -101,9 +103,10 @@ function BackpackService.add(player: Player, lootId: string): boolean
 		return false
 	end
 	local state = BackpackService.ensure(player)
+	local value = math.floor(def.Value * ReplayService.getLootValueMultiplier() + 0.5)
 	table.insert(state.Items, {
 		Id = def.Id,
-		Value = def.Value,
+		Value = value,
 		Weight = def.Weight,
 		Rarity = def.Rarity,
 	})
