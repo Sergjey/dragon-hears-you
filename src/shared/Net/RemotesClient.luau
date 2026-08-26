@@ -77,4 +77,24 @@ function RemotesClient.abilityFx(): RemoteEvent
 	return RemotesClient.getEvent(RemoteNames.AbilityFx)
 end
 
+function RemotesClient.requestBuy(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.RequestBuy)
+end
+
+function RemotesClient.requestEquipLoadout(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.RequestEquipLoadout)
+end
+
+function RemotesClient.requestUseGadget(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.RequestUseGadget)
+end
+
+function RemotesClient.economyState(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.EconomyState)
+end
+
+function RemotesClient.gadgetFx(): RemoteEvent
+	return RemotesClient.getEvent(RemoteNames.GadgetFx)
+end
+
 return RemotesClient

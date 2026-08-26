@@ -1,4 +1,4 @@
--- Client entry. Lobby + class select + dungeon HUD/controllers.
+-- Client entry. Lobby + class/shop + dungeon HUD/controllers.
 local ClassSelectController = require(script.Controllers.ClassSelectController)
 local DragonEffectsController = require(script.Controllers.DragonEffectsController)
 local DownedController = require(script.Controllers.DownedController)
@@ -6,9 +6,11 @@ local HUDController = require(script.Controllers.HUDController)
 local InteractionController = require(script.Controllers.InteractionController)
 local LobbyController = require(script.Controllers.LobbyController)
 local ResultController = require(script.Controllers.ResultController)
+local ShopController = require(script.Controllers.ShopController)
 
 LobbyController.start()
 ClassSelectController.start()
+ShopController.start()
 HUDController.start()
 DragonEffectsController.start()
 DownedController.start()
