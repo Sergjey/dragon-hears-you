@@ -17,3 +17,5 @@ sourcemap.json
 
 # Tooling caches
 *.log
+
+.tmp_sync/

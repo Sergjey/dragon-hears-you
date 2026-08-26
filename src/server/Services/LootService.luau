@@ -1,0 +1,142 @@
+local CollectionService = game:GetService("CollectionService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
+local LootConfig = require(ReplicatedStorage.Shared.Config.LootConfig)
+local Tags = require(ReplicatedStorage.Shared.Config.Tags)
+
+local BackpackService = require(script.Parent.BackpackService)
+local NoiseService = require(script.Parent.NoiseService)
+
+local LootService = {}
+
+local started = false
+local promptConnections: { [ProximityPrompt]: RBXScriptConnection } = {}
+local claimed: { [Instance]: boolean } = {}
+
+local function getCharacterRoot(player: Player): BasePart?
+	local character = player.Character
+	if not character then
+		return nil
+	end
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if root and root:IsA("BasePart") then
+		return root
+	end
+	return nil
+end
+
+local function tryPickup(player: Player, lootInstance: Instance)
+	if claimed[lootInstance] then
+		return
+	end
+	if not lootInstance.Parent then
+		return
+	end
+
+	local lootId = lootInstance:GetAttribute("LootId")
+	if typeof(lootId) ~= "string" then
+		return
+	end
+
+	if not LootConfig.isBackpack(lootId) then
+		-- Carry loot deferred to CarryService (Phase 3+)
+		return
+	end
+
+	local root = getCharacterRoot(player)
+	if not root then
+		return
+	end
+
+	local lootPart: BasePart? = nil
+	if lootInstance:IsA("BasePart") then
+		lootPart = lootInstance
+	else
+		lootPart = lootInstance:FindFirstChildWhichIsA("BasePart")
+	end
+	if not lootPart then
+		return
+	end
+
+	local distance = (root.Position - lootPart.Position).Magnitude
+	if distance > GameConfig.LootPickupMaxDistance then
+		return
+	end
+
+	local canAdd = BackpackService.canAdd(player, lootId)
+	if not canAdd then
+		return
+	end
+
+	claimed[lootInstance] = true
+	local added = BackpackService.add(player, lootId)
+	if not added then
+		claimed[lootInstance] = nil
+		return
+	end
+
+	local def = LootConfig.get(lootId)
+	if def then
+		NoiseService.add(def.PickupNoise, "LootPickup", lootPart.Position)
+	end
+
+	local prompt = lootInstance:FindFirstChildOfClass("ProximityPrompt")
+	if prompt then
+		local conn = promptConnections[prompt]
+		if conn then
+			conn:Disconnect()
+			promptConnections[prompt] = nil
+		end
+	end
+
+	lootInstance:Destroy()
+end
+
+local function bindLoot(instance: Instance)
+	local prompt = instance:FindFirstChildOfClass("ProximityPrompt")
+	if not prompt then
+		return
+	end
+	if promptConnections[prompt] then
+		return
+	end
+
+	promptConnections[prompt] = prompt.Triggered:Connect(function(player: Player)
+		tryPickup(player, instance)
+	end)
+end
+
+function LootService.init()
+	if started then
+		for _, instance in CollectionService:GetTagged(Tags.Loot) do
+			bindLoot(instance)
+		end
+		return
+	end
+	started = true
+
+	for _, instance in CollectionService:GetTagged(Tags.Loot) do
+		bindLoot(instance)
+	end
+
+	CollectionService:GetInstanceAddedSignal(Tags.Loot):Connect(function(instance)
+		task.defer(function()
+			bindLoot(instance)
+		end)
+	end)
+
+	CollectionService:GetInstanceRemovedSignal(Tags.Loot):Connect(function(instance)
+		claimed[instance] = nil
+		local prompt = instance:FindFirstChildOfClass("ProximityPrompt")
+		if prompt then
+			local conn = promptConnections[prompt]
+			if conn then
+				conn:Disconnect()
+				promptConnections[prompt] = nil
+			end
+		end
+	end)
+end
+
+return LootService
